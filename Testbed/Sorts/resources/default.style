@@ -1,0 +1,40 @@
+# The format is :
+#   "ELEMENT" "STATE" "FILE" [OUTER RECT] [INNER RECT];
+# or :
+#   "ELEMENT" "*";
+#
+# File is relative to the executable's path;
+# Rects are specified as 4 comma-separated numbers in square brackets;
+# * enables system-based rendering for supported elements
+
+"WND_HEADER"      "*";
+"WND_FRAME"       "*";
+"BUTTON"          "*";
+"CLOSE_BTN"       "*";
+"MINIMIZE_BTN"    "*";
+
+# TODO: Probably replace the textures
+# "SLIDER_THUMB" "NORMAL" "resources/slider_thumb.png" [0, 0,  5,  5]  [2, 2,  1,  1];
+"SLIDER_THUMB"    "*";
+"SLIDER_VTHUMB"   "*";
+"SLIDER_HTHUMB"   "*";
+# "SLIDER_BODY_2D"  "NORMAL" "resources/slider_body.png"    [0, 0, 15, 15]  [2, 2, 11, 11];
+# "SLIDER_BODY_2D"  "NORMAL" "resources/slider_body_2.png"  [0, 0, 31, 31]  [9, 9, 13, 13];
+"SLIDER_BODY_2D"  "NORMAL" "resources/slider_body_3.png"  [0, 0, 31, 31]  [4, 4, 23, 23];
+"SLIDER_HBODY"    "*";
+"SLIDER_VBODY"    "*";
+
+"SB_ARR_UP"       "*";
+"SB_ARR_DOWN"     "*";
+"SB_ARR_LEFT"     "*";
+"SB_ARR_RIGHT"    "*";
+"SB_HTHUMB"       "*";
+"SB_VTHUMB"       "*";
+"SB_HTRACK"       "*";
+"SB_VTRACK"       "*";
+
+"MENUBAR_BG"      "*";
+"MENUBAR_ITEM"    "*";
+
+"TEXTBOX_BODY"    "*";
+"TEXTBOX_CARET"   "*";
