@@ -175,6 +175,12 @@ void Window::demandRedraw() {
     }
 }
 
+void Window::forceRedraw() {
+    if (!RedrawWindow(window, nullptr, NULL, RDW_NOINTERNALPAINT)) {
+        throw llgui_error("RedrawWindow failed");
+    }
+}
+
 bool Window::isMouseCaptured() {
     return GetCapture() == window;
 }
@@ -380,16 +386,20 @@ void Texture::drawLine(Vector2d from, Vector2d to) {
     }
 }
 
-void Texture::drawArrow(Vector2d from, Vector2d to) {
+void Texture::drawArrow(Vector2d from, Vector2d to, double headLength) {
     constexpr double ARROW_HEAD_ANGLE = 15.0;  // Degrees
-    constexpr double ARROW_HEAD_SCALE = 0.1;
 
     drawLine(from, to);
 
-    Vector2d arrowHead = (to - from) * -ARROW_HEAD_SCALE;
+    Vector2d arrowHead{};
+    if (isZero(headLength)) {
+        arrowHead = (to - from) * 0.05;
+    } else {
+        arrowHead = (to - from).normalize() * headLength;
+    }
 
-    drawLine(to, to + arrowHead.rotatedDegrees(-ARROW_HEAD_ANGLE));
-    drawLine(to, to + arrowHead.rotatedDegrees( ARROW_HEAD_ANGLE));
+    drawLine(to, to - arrowHead.rotatedDegrees(-ARROW_HEAD_ANGLE));
+    drawLine(to, to - arrowHead.rotatedDegrees( ARROW_HEAD_ANGLE));
 
 }
 

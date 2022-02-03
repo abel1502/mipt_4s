@@ -115,6 +115,8 @@ public:
 
     void demandRedraw();
 
+    void forceRedraw();
+
     bool isMouseCaptured();
     void captureMouse();
     void releaseMouse();
@@ -322,7 +324,7 @@ public:
         return drawLine(from, from + along);
     }
 
-    void drawArrow(Vector2d from, Vector2d to);
+    void drawArrow(Vector2d from, Vector2d to, double headLength = 0);
 
     void drawLineInf(Vector2d from, Vector2d to);
 
