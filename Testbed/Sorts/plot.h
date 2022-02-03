@@ -14,9 +14,9 @@ using abel::math::Vector2d;
 namespace widgets = abel::gui::widgets;
 
 
-class PlotWidget : public abel::gui::Widget {
+class PlotWidget : public widgets::StaticGroup<widgets::Label> {
 public:
-    using Base = abel::gui::Widget;
+    using Base = widgets::StaticGroup<widgets::Label>;
     EVENT_HANDLER_USING(Base);
 
 
@@ -35,7 +35,7 @@ public:
     abel::Signal<bool (PlotWidget &plot)> sigChanged{};
 
 
-    PlotWidget(Widget *parent_, const Rect<double> &region_);
+    PlotWidget(Widget *parent_, const Rect<double> &region_, const char *title = "");
 
     EVENT_HANDLER_OVERRIDE(abel::gui::Render);
 
@@ -43,8 +43,9 @@ public:
         limits = limits_;
 
         if (vFlip) {
-            limits.y(limits.y() - limits.h());
-            limits.h(-limits.h());
+            double tmp = limits.y1();
+            limits.y1(limits.y0());
+            limits.y0(tmp);
         }
     }
     constexpr const Rect<double> &getLimits() const { return limits; }
@@ -68,6 +69,9 @@ protected:
     mutable bool _cachedTextureValid = false;
     mutable abel::unique_ptr<abel::gui::Texture> _cachedTexture = nullptr;
 
+
+    SGRP_DECLARE_BINDING_T(label, widgets::Label);
+
     constexpr abel::gui::Coords getCoords() const {
         return abel::gui::Coords{getBounds(), limits};
     }
@@ -87,6 +91,8 @@ protected:
     void invalidateCache(bool keepOld = true);
 
     void renderBackground(abel::gui::Texture &target, const Rect<double> &at) const;
+
+    void renderPoints(abel::gui::Texture &target) const;
 
     void renderPlot(abel::gui::Texture &target) const;
 

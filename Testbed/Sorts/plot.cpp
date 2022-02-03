@@ -3,8 +3,13 @@
 #include "app.h"
 
 
-PlotWidget::PlotWidget(Widget *parent_, const Rect<double> &region_) :
-    Base(parent_, region_) {
+PlotWidget::PlotWidget(Widget *parent_, const Rect<double> &region_, const char *title) :
+    Base(parent_, region_, nullptr) {
+
+    Vector2d labelStart{region.w() * 0.6, 0};
+    Vector2d labelSize{region.w() - labelStart.x(), 32};
+
+    label(new widgets::Label(nullptr, Rect<double>::wh(labelStart, labelSize), title));
 
     resetPoints();
 }
@@ -29,13 +34,13 @@ void PlotWidget::clear() {
 
 void PlotWidget::invalidateCache(bool keepOld) {
     _cachedTextureValid = false;
-    _cachedTextureExists = keepOld;
+    _cachedTextureExists = _cachedTextureExists && keepOld;
 
     sigChanged(*this);
 }
 
 EVENT_HANDLER_IMPL(PlotWidget, abel::gui::Render) {
-    EventStatus status = Base::dispatchEvent(event);
+    EventStatus status = Widget::dispatchEvent(event);
 
     if (!status.shouldHandle(status.NODE)) {
         return status;
@@ -45,10 +50,11 @@ EVENT_HANDLER_IMPL(PlotWidget, abel::gui::Render) {
         if (!_cachedTextureExists) {
             _cachedTexture = new abel::gui::Texture(region);
             _cachedTextureExists = true;
+
+            renderBackground(*_cachedTexture, getBounds());
         }
 
-        renderBackground(*_cachedTexture, getBounds());
-
+        renderPoints(*_cachedTexture);
         renderPlot(*_cachedTexture);
 
         _cachedTextureValid = true;
@@ -56,7 +62,7 @@ EVENT_HANDLER_IMPL(PlotWidget, abel::gui::Render) {
 
     event.target.embed(region, *_cachedTexture);
 
-    return status;
+    return _dispatchToChildren(event);
 }
 
 void PlotWidget::renderBackground(abel::gui::Texture &target, const Rect<double> &at) const {
@@ -66,6 +72,7 @@ void PlotWidget::renderBackground(abel::gui::Texture &target, const Rect<double>
 
     // TODO: Perhaps axis lines with arrows instead?
     Vector2d zeroPos = valueToPos(Vector2d{0});
+
     Vector2d axisXL{at.x0(), zeroPos.y()},
              axisXR{at.x1(), zeroPos.y()},
              axisYB{zeroPos.x(), at.y0()},
@@ -83,8 +90,8 @@ void PlotWidget::renderBackground(abel::gui::Texture &target, const Rect<double>
     target.setLineWidth(1.f);
     target.clipPush(at.padded(-1, -1, -1, -1));
 
-    target.drawArrow(axisXL, axisXR);
-    target.drawArrow(axisYB, axisYT);
+    target.drawArrow(axisXL, axisXR, 15);
+    target.drawArrow(axisYB, axisYT, 15);
 
     #if 0
     constexpr unsigned GRID_STEPS = 9;
@@ -102,6 +109,10 @@ void PlotWidget::renderBackground(abel::gui::Texture &target, const Rect<double>
     #endif
 
     target.clipPop();
+}
+
+void PlotWidget::renderPoints(abel::gui::Texture &target) const {
+    // TODO
 }
 
 void PlotWidget::renderPlot(abel::gui::Texture &target) const {
