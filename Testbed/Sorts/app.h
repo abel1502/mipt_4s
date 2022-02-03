@@ -4,6 +4,8 @@
 #include <ACL/general.h>
 #include <AGF/application.h>
 #include <AGF/widgets/window.h>
+#include <ACL/unique_ptr.h>
+#include "subapp_plot.h"
 
 
 using abel::gui::Rect;
@@ -33,6 +35,6 @@ public:
     void forceRender();
 
 protected:
-    //
+    abel::unique_ptr<PlotSubapp> subappPlot{nullptr};
 
 };

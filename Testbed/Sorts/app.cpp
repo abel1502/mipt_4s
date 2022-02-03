@@ -31,31 +31,44 @@ void MyApp::init(int argc, const char **argv) {
     using abel::gui::WidgetRef;
     using abel::gui::WidgetRefTo;
 
-    Layout *lay = new Layout(nullptr, Rect<double>::wh(0, 0, 140, 190), LAD_VERTICAL, 10);
+    subappPlot = new PlotSubapp();
 
-    lay->createChild<Button>(Rect<double>::wh(10, 0, 120, 50), "A plot")
-        .sigClick += [](){
+    Layout *lay = new Layout(nullptr, Rect<double>::wh(0, 0, 160, 190), LAD_VERTICAL, 10);
+
+    lay->createChild<Button>(Rect<double>::wh(0, 0, 140, 50), "A plot")
+        .sigClick += [this](){
+
+        subappPlot->activate(!subappPlot->isActive());
+
+        return false;
+    };
+
+    lay->createChild<Button>(Rect<double>::wh(0, 0, 140, 50), "A bar chart")
+        .sigClick += [this](){
         // TODO
 
         return false;
     };
 
-    lay->createChild<Button>(Rect<double>::wh(10, 0, 120, 50), "A bar chart")
-        .sigClick += [](){
-        // TODO
-
-        return false;
-    };
-
-    lay->createChild<Button>(Rect<double>::wh(10, 0, 120, 50), "I like my console")
-        .sigClick += [](){
+    lay->createChild<Button>(Rect<double>::wh(0, 0, 140, 50), "I like my console")
+        .sigClick += [this](){
         // TODO
 
         return false;
     };
 
     WindowManager *mgr = new WindowManager(nullptr, Rect<double>::wh(0, 0, 800, 600));
-    mgr->createWindow(Rect<double>::wh(140, 50, 140, 190), "Pick whatever you like", lay);
+    mgr->createWindow(Rect<double>::wh(140, 50, 160, 190), "Pick:", lay);
+
+    #if 0
+    PlotWidget *testPlot = new PlotWidget(nullptr, Rect<double>::wh(0, 0, 200, 200));
+    testPlot->setLimits(Rect<double>::se(-5, -5, 5, 5));
+    testPlot->addPoint({-1, -1});
+    testPlot->addPoint({0, -1});
+    testPlot->addPoint({1, 0});
+    testPlot->addPoint({2, 2});
+    mgr->createWindow(Rect<double>::wh(340, 150, 200, 200), "Test plot", testPlot);
+    #endif
 
     mainWidget = mgr;
 
