@@ -17,11 +17,15 @@ public:
     inline const char *getText() const noexcept { return text.data(); }
     void setText(const char *text_);
 
+    inline const Color &getTextColor() const { return textColor; }
+    void setTextColor(const Color &color);
+
     EVENT_HANDLER_OVERRIDE(Render);
 
 protected:
     std::string text;
     unsigned format;
+    Color textColor{Color::BLACK};
 
     void updated();
 

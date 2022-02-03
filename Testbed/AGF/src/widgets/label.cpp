@@ -19,6 +19,12 @@ void Label::setText(const char *text_) {
     updated();
 }
 
+void Label::setTextColor(const Color &color) {
+    textColor = color;
+
+    updated();
+}
+
 void Label::updated() {
     Application::getInstance().demandRedraw();
 }
@@ -29,7 +35,7 @@ EVENT_HANDLER_IMPL(Label, Render) {
     if (!status.shouldHandle(status.NODE))
         return status;
 
-    event.target.setFillColor(Color::BLACK);
+    event.target.setFillColor(textColor);
     event.target.setFont("Segoe UI", getStyle().textSize);
     event.target.drawText(region, text.data());
     return EventStatus::done();
