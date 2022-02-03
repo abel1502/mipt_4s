@@ -109,15 +109,15 @@ public:
 
     inline bool hasQueuedActions() const noexcept { return !actionQueue.empty(); }
 
-    void enqueueAction(action_cb_t &&callback, ActionPriority priority = P_NORMAL);
+    void enqueueAction(action_cb_t &&callback, ActionPriority priority = P_NORMAL, bool bypass = false);
 
     template <typename T>
-    inline void enqueueEvent(T &&event, ActionPriority priority = P_NORMAL) {
+    inline void enqueueEvent(T &&event, ActionPriority priority = P_NORMAL, bool bypass = false) {
         static_assert(std::is_base_of_v<WidgetEvent, T>);
 
         enqueueAction([event = std::forward<T>(event)](Application &app) {
             app.dispatchEvent(event);
-        }, priority);
+        }, priority, bypass);
     }
 
     // Called from library main to set up the application initially
@@ -177,7 +177,7 @@ protected:
     unsigned kbdCaptureDeg = 0;
 
     std::mutex actionQueueMutex{};
-    std::mutex actionExecMutex{};
+    std::timed_mutex actionExecMutex{};
     std::deque<action_cb_t> actionQueue{};
 
     // TODO: Adapt more generally...?

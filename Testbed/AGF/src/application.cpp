@@ -11,25 +11,26 @@ Application::app_ptr_t Application::instance = nullptr;
 
 Application::Application() {}
 
-void Application::enqueueAction(action_cb_t &&callback, ActionPriority priority) {
+void Application::enqueueAction(action_cb_t &&callback, ActionPriority priority, bool bypass) {
     switch (priority) {
-    case P_NORMAL:
+    case P_NORMAL: {
         actionQueueMutex.lock();
         actionQueue.push_back(std::move(callback));
         actionQueueMutex.unlock();
-        break;
+    } break;
 
-    case P_HIGH:
+    case P_HIGH: {
         actionQueueMutex.lock();
         actionQueue.push_front(std::move(callback));
         actionQueueMutex.unlock();
-        break;
+    } break;
 
-    case P_IMMEDIATE:
-    {
-        actionExecMutex.lock();
+    case P_IMMEDIATE: {
+        if (!bypass)
+            actionExecMutex.lock();
         callback(*this);
-        actionExecMutex.unlock();
+        if (!bypass)
+            actionExecMutex.unlock();
     } break;
 
     NODEFAULT
@@ -256,8 +257,16 @@ LRESULT Application::dispatchWindowsEvent(HWND hWnd, UINT uMsg, WPARAM wParam, L
         texture.clear();  // TODO: Remove, or maybe move to WM_ERASEBKGND?
 
         try {
+            using namespace std::chrono_literals;
+
+            // Kind of crotchy, but whatever
+            if (!actionExecMutex.try_lock_for(50ms)) {
+                wnd->demandRedraw();
+                return 0;
+            }
             // Render event must be synchronous due to WINAPI's limitations
-            enqueueEvent(RenderEvent{texture}, P_IMMEDIATE);
+            enqueueEvent(RenderEvent{texture}, P_IMMEDIATE, true);
+            actionExecMutex.unlock();
 
             wnd->render(texture);
         } catch (const llgui_error &e) {
