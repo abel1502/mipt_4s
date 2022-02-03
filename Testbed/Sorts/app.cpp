@@ -143,3 +143,17 @@ void MyApp::deinit() {
 
     Application::deinit();
 }
+
+
+void MyApp::forceRender() {
+    abel::gui::Texture texture{*wnd};
+    texture.setFillColor(Color::WHITE);
+    texture.clear();
+
+    enqueueEvent(abel::gui::RenderEvent{texture}, P_IMMEDIATE, true);
+
+    wnd->render(texture);
+
+    // TODO: Maybe remove
+    // wnd->update();
+}

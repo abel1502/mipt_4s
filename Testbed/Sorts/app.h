@@ -30,6 +30,8 @@ public:
         return dynamic_cast<widgets::WindowManager &>(*mainWidget);
     }
 
+    void forceRender();
+
 protected:
     //
 
