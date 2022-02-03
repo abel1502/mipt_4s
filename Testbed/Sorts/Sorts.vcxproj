@@ -208,12 +208,16 @@
   <ItemGroup>
     <ClInclude Include="app.h" />
     <ClInclude Include="plot.h" />
+    <ClInclude Include="sort_provider.h" />
     <ClInclude Include="subapp_plot.h" />
+    <ClInclude Include="tracer.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="app.cpp" />
     <ClCompile Include="plot.cpp" />
+    <ClCompile Include="sort_provider.cpp" />
     <ClCompile Include="subapp_plot.cpp" />
+    <ClCompile Include="tracer.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="cpp.hint" />
