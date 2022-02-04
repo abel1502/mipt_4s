@@ -2,7 +2,6 @@
 #include <AGF/widgets/all.h>
 #include <AGF/helpers/widget_ref.h>
 #include "app.h"
-#include "subapp_plot.h"
 #include <ACL/debug.h>
 
 
@@ -32,6 +31,7 @@ void MyApp::init(int argc, const char **argv) {
     using abel::gui::WidgetRefTo;
 
     subappPlot = new PlotSubapp();
+    subappCounter = new CounterSubapp();
 
     Layout *lay = new Layout(nullptr, Rect<double>::wh(0, 0, 160, 190), LAD_VERTICAL, 10);
 
@@ -52,7 +52,7 @@ void MyApp::init(int argc, const char **argv) {
 
     lay->createChild<Button>(Rect<double>::wh(0, 0, 140, 50), "I like my console")
         .sigClick += [this](){
-        // TODO
+        subappCounter->activate();
 
         return false;
     };

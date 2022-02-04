@@ -6,6 +6,7 @@
 #include <AGF/widgets/window.h>
 #include <ACL/unique_ptr.h>
 #include "subapp_plot.h"
+#include "subapp_counter.h"
 
 
 using abel::gui::Rect;
@@ -36,5 +37,6 @@ public:
 
 protected:
     abel::unique_ptr<PlotSubapp> subappPlot{nullptr};
+    abel::unique_ptr<CounterSubapp> subappCounter{nullptr};
 
 };
