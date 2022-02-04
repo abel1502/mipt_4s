@@ -27,13 +27,14 @@ public:
 
 
     // Other may be null
-    static abel::Signal<bool (Op op, const Tracer *inst, const Tracer *other)> sigOp;
+    static abel::Signal<bool (Op op, const Tracer *inst, const Tracer *other, const char *opSym)> sigOp;
     // Any extra data a particular implementation
     // might desire should reside here
     E extra{};
 
 
     const T &getVal() const { return value; }
+    const T &getLastVal() const { return lastValue; }
 
 
     #pragma region Ctor,Dtor,Copy,Move
@@ -46,48 +47,54 @@ public:
     Tracer(T &&value_) :
         value{std::move(value_)} {
 
-        sigOp(Op::Ctor, this, nullptr);
+        sigOp(Op::Ctor, this, nullptr, "");
     }
 
     Tracer(const Tracer &other) :
-        value{other.value} {
+        value{other.value},
+        lastValue{other.lastValue} {
 
-        sigOp(Op::Copy, this, &other);
+        sigOp(Op::Copy, this, &other, "cp");
     }
 
     Tracer(Tracer &&other) :
-        value{std::move(other.value)} {
+        value{std::move(other.value)},
+        lastValue{std::move(other.lastValue)} {
 
-        sigOp(Op::Move, this, &other);
+        sigOp(Op::Move, this, &other, "mv");
     }
 
     Tracer &operator=(const Tracer &other) {
+        lastValue = value;
         value = other.value;
 
-        sigOp(Op::Copy, this, &other);
+        sigOp(Op::Copy, this, &other, "cp=");
 
         return *this;
     }
 
     Tracer &operator=(Tracer &&other) {
+        lastValue = value;
+        other.lastValue = other.value;
         std::swap(value, other.value);
 
-        sigOp(Op::Move, this, &other);
+        sigOp(Op::Move, this, &other, "mv=");
 
         return *this;
     }
 
     ~Tracer() {
-        sigOp(Op::Dtor, this, nullptr);
+        sigOp(Op::Dtor, this, nullptr, "");
     }
     #pragma endregion Ctor,Dtor,Copy,Move
 
     #pragma region Inplace
     #define INPLACE_OP_(OP)                         \
         Tracer &operator OP(const Tracer &other) {  \
+            lastValue = value;                      \
             value OP other.value;                   \
                                                     \
-            sigOp(Op::Inplace, this, &other);       \
+            sigOp(Op::Inplace, this, &other, #OP);  \
                                                     \
             return *this;                           \
         }
@@ -110,9 +117,10 @@ public:
     #define BINARY_OP_(OP)                                  \
         friend Tracer operator OP(Tracer self,              \
                                   const Tracer &other) {    \
+            self.lastValue = self.value;                    \
             self.value OP##= other.value;                   \
                                                             \
-            sigOp(Op::Binary, &self, &other);               \
+            sigOp(Op::Binary, &self, &other, #OP);          \
                                                             \
             return self;                                    \
         }
@@ -133,17 +141,19 @@ public:
 
     #pragma region Increments & Decrements
     Tracer &operator++() {
+        lastValue = value;
         ++value;
 
-        sigOp(Op::Unary, this, nullptr);
+        sigOp(Op::Unary, this, nullptr, "++");
 
         return *this;
     }
 
     Tracer &operator--() {
+        lastValue = value;
         --value;
 
-        sigOp(Op::Unary, this, nullptr);
+        sigOp(Op::Unary, this, nullptr, "--");
 
         return *this;
     }
@@ -151,7 +161,7 @@ public:
     Tracer operator++(int) {
         Tracer result{value++};
 
-        sigOp(Op::Unary, this, nullptr);
+        sigOp(Op::Unary, this, &result, "++");
 
         return result;
     }
@@ -159,7 +169,7 @@ public:
     Tracer operator--(int) {
         Tracer result{value--};
 
-        sigOp(Op::Unary, this, nullptr);
+        sigOp(Op::Unary, this, &result, "--");
 
         return result;
     }
@@ -168,9 +178,10 @@ public:
     #pragma region Unary
     #define UNARY_OP_(OP)                           \
         friend Tracer operator OP(Tracer self) {    \
+            self.lastValue = self.value;            \
             self.value = OP self.value;             \
                                                     \
-            sigOp(Op::Unary, &self, nullptr);       \
+            sigOp(Op::Unary, &self, nullptr, #OP);  \
                                                     \
             return self;                            \
         }
@@ -187,7 +198,7 @@ public:
         bool operator OP(const Tracer &other) const {   \
             bool result = (value OP other.value);       \
                                                         \
-            sigOp(Op::Cmp, this, &other);               \
+            sigOp(Op::Cmp, this, &other, #OP);          \
                                                         \
             return result;                              \
         }
@@ -203,12 +214,14 @@ public:
     #pragma endregion Cmp
 
 protected:
+    T lastValue{};
     T value{};
 
 };
 
 
 template <typename T, typename E>
-abel::Signal<bool (typename Tracer<T, E>::Op op, const Tracer<T, E> *inst, const Tracer<T, E> *other)>
+abel::Signal<bool (typename Tracer<T, E>::Op op, const Tracer<T, E> *inst,
+                   const Tracer<T, E> *other, const char *opSym)>
     Tracer<T, E>::sigOp{};
 
