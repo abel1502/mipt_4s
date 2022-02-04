@@ -11,6 +11,7 @@ PlotSubapp::MyWidget::MyWidget(abel::gui::Widget *parent_,
          nullptr,
          nullptr,
          nullptr,
+         nullptr,
          nullptr) {
 
     Vector2d plotSize = region.getDiag() - Vector2d{2 * PAD};
@@ -22,7 +23,7 @@ PlotSubapp::MyWidget::MyWidget(abel::gui::Widget *parent_,
     Vector2d btnsSize = region.getDiag() - Vector2d{2 * PAD};
     btnsSize.x() *= 0.3;
     btnsSize.x() -= PAD / 2;
-    btnsSize.y() -= PAD / 2 + BTN_HEIGHT;
+    btnsSize.y() -= PAD / 2 + PAD + BTN_HEIGHT * 2;
 
     plotCmp (new PlotWidget(nullptr, Rect<double>::wh(Vector2d{PAD, PAD},                    plotSize), "Comparisons"));
     plotAsgn(new PlotWidget(nullptr, Rect<double>::wh(Vector2d{PAD, PAD * 2 + plotSize.y()}, plotSize), "Assignments"));
@@ -37,8 +38,13 @@ PlotSubapp::MyWidget::MyWidget(abel::gui::Widget *parent_,
         Rect<double>::wh(Vector2d{PAD * 2 + plotSize.x(), PAD}, btnsSize),
         widgets::LAD_VERTICAL, PAD));
 
-    resetBtn(new widgets::Button(nullptr,
+    regenBtn(new widgets::Button(nullptr,
         Rect<double>::wh(Vector2d{PAD * 2 + plotSize.x(), PAD * 2 + btnsSize.y()},
+                         Vector2d{btnsSize.x(), BTN_HEIGHT}),
+        "New testcase"));
+
+    resetBtn(new widgets::Button(nullptr,
+        Rect<double>::wh(Vector2d{PAD * 2 + plotSize.x(), PAD * 3 + btnsSize.y() + BTN_HEIGHT},
                          Vector2d{btnsSize.x(), BTN_HEIGHT}),
         "Reset"));
 
@@ -93,34 +99,31 @@ void PlotSubapp::MyWidget::addSortButton(const Color &color, const char *name, s
         return false;
     };
 }
+
+void PlotSubapp::MyWidget::setRegenCallback(std::function<bool ()> &&callback) {
+    regenBtn().sigClick.clear();
+    regenBtn().sigClick += std::move(callback);
+}
 #pragma endregion PlotSubapp::MyWidget
 
 
 #pragma region PlotSubapp
-bool PlotSubapp::hookedWrapperSignal = false;
-
-
 PlotSubapp::PlotSubapp() {
     registerSorts();
 
     abel::srand(0x1234567);
 
-    modelArray.resize(testSize);
-    for (unsigned i = 0; i < testSize; ++i) {
-        modelArray[i] = wrapper_t{(elem_t)abel::randLL(testSize * 10)};
-    }
+    regenerateModelArray();
 
-    if (!hookedWrapperSignal) {
-        wrapper_t::sigOp += [this](wrapper_t::Op op, const wrapper_t *inst, const wrapper_t *other) {
-            if (!isActive()) {
-                return false;
-            }
-
-            onWrapperOp(op, inst, other);
-
+    wrapper_t::sigOp += [this](wrapper_t::Op op, const wrapper_t *inst, const wrapper_t *other, const char *opSym) {
+        if (!isActive()) {
             return false;
-        };
-    }
+        }
+
+        onWrapperOp(op, inst, other, opSym);
+
+        return false;
+    };
 }
 
 void PlotSubapp::registerSorts() {
@@ -169,6 +172,12 @@ void PlotSubapp::createWidget() {
                               [this, &sorter = *sorter]() { runTest(sorter); });
     }
 
+    widget->setRegenCallback([this]() {
+        regenerateModelArray();
+
+        return false;
+    });
+
     wnd = MyApp::getInstance().getWindowMgrWidget().createWindow(
         Rect<double>::wh({100, 50}, SIZE),
         "Have some plots bro",
@@ -210,7 +219,7 @@ void PlotSubapp::runOneTest(SortProvider<wrapper_t> &sorter, unsigned size) {
     }
 }
 
-void PlotSubapp::onWrapperOp(wrapper_t::Op op, const wrapper_t *inst, const wrapper_t *other) {
+void PlotSubapp::onWrapperOp(wrapper_t::Op op, const wrapper_t *inst, const wrapper_t *other, const char *opSym) {
     using Op = wrapper_t::Op;
 
     if (!results.collecting) {
@@ -229,6 +238,13 @@ void PlotSubapp::onWrapperOp(wrapper_t::Op op, const wrapper_t *inst, const wrap
 
     default:
         break;
+    }
+}
+
+void PlotSubapp::regenerateModelArray() {
+    modelArray.resize(testSize);
+    for (unsigned i = 0; i < testSize; ++i) {
+        modelArray[i] = wrapper_t{(elem_t)abel::randLL(testSize * 10)};
     }
 }
 #pragma endregion PlotSubapp

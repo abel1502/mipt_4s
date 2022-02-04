@@ -23,12 +23,15 @@ private:
             widgets::LayoutOf<
                 widgets::Button
             >,
+            widgets::Button,
             widgets::Button
         >;
 
+    struct _MarkerExtra {};
+
 public:
     using elem_t = int;
-    using wrapper_t = Tracer<elem_t>;
+    using wrapper_t = Tracer<elem_t, _MarkerExtra>;
 
     class MyWidget : public _MyWidgetBase {
     public:
@@ -52,6 +55,8 @@ public:
 
         void addSortButton(const Color &color, const char *name, std::function<void ()> &&callback);
 
+        void setRegenCallback(std::function<bool ()> &&callback);
+
     protected:
         bool plotActive = false;
 
@@ -60,6 +65,7 @@ public:
         SGRP_DECLARE_BINDING_I(plotAsgn, 1);
         SGRP_DECLARE_BINDING_I(sortBtns, 2);
         SGRP_DECLARE_BINDING_I(resetBtn, 3);
+        SGRP_DECLARE_BINDING_I(regenBtn, 4);
 
     };
 
@@ -68,18 +74,15 @@ public:
 
     PlotSubapp(const PlotSubapp &other) = delete;
     PlotSubapp &operator=(const PlotSubapp &other) = delete;
+    PlotSubapp(PlotSubapp &&other) = delete;
+    PlotSubapp &operator=(PlotSubapp &&other) = delete;
 
-    PlotSubapp(PlotSubapp &&other) = default;
-    PlotSubapp &operator=(PlotSubapp &&other) = default;
 
     inline bool isActive() const { return wnd; }
 
     void activate(bool active = true);
 
 protected:
-    static bool hookedWrapperSignal;
-
-
     unsigned testSize = 100;
     abel::gui::WidgetRefTo<abel::gui::widgets::Window> wnd{nullptr};
     struct {
@@ -111,6 +114,8 @@ protected:
 
     void runOneTest(SortProvider<wrapper_t> &sorter, unsigned size);
 
-    void onWrapperOp(wrapper_t::Op op, const wrapper_t *inst, const wrapper_t *other);
+    void onWrapperOp(wrapper_t::Op op, const wrapper_t *inst, const wrapper_t *other, const char *opSym);
+
+    void regenerateModelArray();
 
 };
