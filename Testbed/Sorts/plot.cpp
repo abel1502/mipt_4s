@@ -54,6 +54,9 @@ EVENT_HANDLER_IMPL(PlotWidget, abel::gui::Render) {
             renderBackground(*_cachedTexture, getBounds());
         }
 
+        // To account for movements
+        _cachedTexture->offset() = region.getPos();
+
         renderPoints(*_cachedTexture);
         renderPlot(*_cachedTexture);
 
