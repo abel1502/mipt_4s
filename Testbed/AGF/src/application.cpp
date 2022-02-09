@@ -251,11 +251,6 @@ LRESULT Application::dispatchWindowsEvent(HWND hWnd, UINT uMsg, WPARAM wParam, L
                 return 0;
             renderTimer = 0;
         }
-
-        abel::gui::Texture texture{*wnd};
-        texture.setFillColor(Color::WHITE);
-        texture.clear();  // TODO: Remove, or maybe move to WM_ERASEBKGND?
-
         try {
             using namespace std::chrono_literals;
 
@@ -264,6 +259,11 @@ LRESULT Application::dispatchWindowsEvent(HWND hWnd, UINT uMsg, WPARAM wParam, L
                 wnd->demandRedraw();
                 return 0;
             }
+
+            abel::gui::Texture texture{*wnd};
+            texture.setFillColor(Color::WHITE);
+            texture.clear();  // TODO: Remove, or maybe move to WM_ERASEBKGND?
+
             // Render event must be synchronous due to WINAPI's limitations
             enqueueEvent(RenderEvent{texture}, P_IMMEDIATE, true);
             actionExecMutex.unlock();
