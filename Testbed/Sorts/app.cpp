@@ -38,7 +38,7 @@ void MyApp::init(int argc, const char **argv) {
     lay->createChild<Button>(Rect<double>::wh(0, 0, 140, 50), "A plot")
         .sigClick += [this](){
 
-        subappPlot->activate(!subappPlot->isActive());
+        subappPlot->activate();
 
         return false;
     };
@@ -58,7 +58,7 @@ void MyApp::init(int argc, const char **argv) {
     };
 
     WindowManager *mgr = new WindowManager(nullptr, Rect<double>::wh(0, 0, 800, 600));
-    mgr->createWindow(Rect<double>::wh(140, 50, 160, 190), "Pick:", lay);
+    mgr->createWindow(Rect<double>::wh(140, 50, 160, 190), "Pick:", lay).markEssential();
 
     #if 0
     PlotWidget *testPlot = new PlotWidget(nullptr, Rect<double>::wh(0, 0, 200, 200));
@@ -159,6 +159,8 @@ void MyApp::deinit() {
 
 
 void MyApp::forceRender() {
+    /// See the prerequisites in app.h!
+
     abel::gui::Texture texture{*wnd};
     texture.setFillColor(Color::WHITE);
     texture.clear();

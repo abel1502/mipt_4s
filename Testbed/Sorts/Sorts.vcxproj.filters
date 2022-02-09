@@ -33,6 +33,12 @@
     <ClInclude Include="subapp_counter.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="subapp_bars.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="bars.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="app.cpp">
@@ -51,6 +57,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="subapp_counter.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="subapp_bars.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="bars.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

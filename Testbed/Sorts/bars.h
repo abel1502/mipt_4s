@@ -1,10 +1,10 @@
+#if 0
 #pragma once
 #include <AGF/widget.h>
 #include <AGF/widgets/all.h>
 #include <ACL/general.h>
 #include <ACL/vector.h>
 #include <ACL/gui/coords.h>
-#include <ACL/signal.h>
 
 
 using abel::gui::Rect;
@@ -13,28 +13,13 @@ using abel::math::Vector2d;
 namespace widgets = abel::gui::widgets;
 
 
-class PlotWidget : public widgets::StaticGroup<widgets::Label> {
+class BarsWidget : public abel::gui::Widget {
 public:
-    using Base = widgets::StaticGroup<widgets::Label>;
+    using Base = abel::gui::Widget;
     EVENT_HANDLER_USING(Base);
 
 
-    struct Point {
-        Vector2d value{};
-
-
-        inline explicit Point(const Vector2d &value_) :
-            value{value_} {}
-
-        inline bool operator<(const Point &other) const noexcept {
-            return value.x() < other.value.x();
-        }
-    };
-
-    abel::Signal<bool (PlotWidget &plot)> sigChanged{};
-
-
-    PlotWidget(Widget *parent_, const Rect<double> &region_, const char *title = "");
+    BarsWidget(Widget *parent_, const Rect<double> &region_);
 
     EVENT_HANDLER_OVERRIDE(abel::gui::Render);
 
@@ -96,4 +81,4 @@ protected:
     void renderPlot(abel::gui::Texture &target) const;
 
 };
-
+#endif

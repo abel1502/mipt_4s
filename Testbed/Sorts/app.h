@@ -1,5 +1,4 @@
 #pragma once
-
 #include <AGF/llgui_pre.h>
 #include <ACL/general.h>
 #include <AGF/application.h>
@@ -33,6 +32,9 @@ public:
         return dynamic_cast<widgets::WindowManager &>(*mainWidget);
     }
 
+    /// Some prerequisites:
+    ///  - Only call inside event dispatch
+    ///  - Don't call this inside the dispatch of a RenderEvent
     void forceRender();
 
 protected:

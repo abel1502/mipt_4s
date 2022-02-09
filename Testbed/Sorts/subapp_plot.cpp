@@ -139,20 +139,25 @@ void PlotSubapp::registerSort(SortProvider<wrapper_t> *provider) {
 }
 
 void PlotSubapp::activate(bool active) {
-    if (active == isActive()) {
-        // Already in the desired state
-        return;
-    }
-
     if (active) {
         // Turn on
 
-        createWidget();
+        if (!isActive()) {
+            createWidget();
+        }
+
+        wnd->setHidden(false);
+        // wnd->bringToFront();
+
         assert(isActive());
     } else {
         // Turn off
 
-        wnd->die();
+        if (isActive()) {
+            wnd->setHidden(true);
+        }
+
+        // wnd->die();
     }
 }
 

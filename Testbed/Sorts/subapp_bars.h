@@ -1,6 +1,6 @@
+#if 0
 #pragma once
 #include <AGF/llgui_pre.h>
-#include "plot.h"
 #include "sort_provider.h"
 #include "tracer.h"
 #include <AGF/helpers/widget_ref.h>
@@ -14,12 +14,11 @@ using abel::math::Vector2d;
 namespace widgets = abel::gui::widgets;
 
 
-class PlotSubapp {
+class BarsSubapp {
 private:
     using _MyWidgetBase =
         widgets::StaticGroup<
-            PlotWidget,
-            PlotWidget,
+            BarsWidget,  // TODO: Implement
             widgets::LayoutOf<
                 widgets::Button
             >,
@@ -45,27 +44,24 @@ public:
 
         MyWidget(abel::gui::Widget *parent_, const Rect<double> &region_, const Vector2d &scale);
 
-        void beginPlot(const Color &color);
+        void populate(const abel::vector<wrapper_t> *data);
 
-        void endPlot();
+        void swapItems(size_t a, size_t b);
 
-        void addPoint(double size, double cmps, double asgns);
-
-        void clearAll();
+        void swapItems(const wrapper_t *a, const wrapper_t *b);
 
         void addSortButton(const Color &color, const char *name, std::function<void ()> &&callback);
 
         void setRegenCallback(std::function<bool ()> &&callback);
 
     protected:
-        bool plotActive = false;
+        const abel::vector<wrapper_t> *data = nullptr;
 
 
-        SGRP_DECLARE_BINDING_I(plotCmp, 0);
-        SGRP_DECLARE_BINDING_I(plotAsgn, 1);
-        SGRP_DECLARE_BINDING_I(sortBtns, 2);
-        SGRP_DECLARE_BINDING_I(resetBtn, 3);
-        SGRP_DECLARE_BINDING_I(regenBtn, 4);
+        SGRP_DECLARE_BINDING_I(barChart, 0);
+        SGRP_DECLARE_BINDING_I(sortBtns, 1);
+        SGRP_DECLARE_BINDING_I(resetBtn, 2);
+        SGRP_DECLARE_BINDING_I(regenBtn, 3);
 
     };
 
@@ -119,3 +115,4 @@ protected:
     void regenerateModelArray();
 
 };
+#endif

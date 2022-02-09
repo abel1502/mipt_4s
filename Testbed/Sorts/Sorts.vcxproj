@@ -207,16 +207,20 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="app.h" />
+    <ClInclude Include="bars.h" />
     <ClInclude Include="plot.h" />
     <ClInclude Include="sort_provider.h" />
+    <ClInclude Include="subapp_bars.h" />
     <ClInclude Include="subapp_counter.h" />
     <ClInclude Include="subapp_plot.h" />
     <ClInclude Include="tracer.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="app.cpp" />
+    <ClCompile Include="bars.cpp" />
     <ClCompile Include="plot.cpp" />
     <ClCompile Include="sort_provider.cpp" />
+    <ClCompile Include="subapp_bars.cpp" />
     <ClCompile Include="subapp_counter.cpp" />
     <ClCompile Include="subapp_plot.cpp" />
     <ClCompile Include="tracer.cpp" />
