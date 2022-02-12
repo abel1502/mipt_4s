@@ -45,6 +45,9 @@ public:
     void regEvent(TracedOp op, const TraceEntry::VarInfo &inst,
                   const TraceEntry::VarInfo &other, const char *opStr);
 
+    inline const std::vector<TraceEntry> &getEntries() const { return entries; }
+    inline       std::vector<TraceEntry> &getEntries()       { return entries; }
+
 protected:
     static Trace instance;
 
