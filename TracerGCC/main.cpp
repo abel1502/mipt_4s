@@ -9,7 +9,6 @@ using wrapper_t = Tracer<num_t>;
 
 int main() {
     abel::verbosity = 2;
-    DBG("!!!!");
 
     FUNC_GUARD;
 

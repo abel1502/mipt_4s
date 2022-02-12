@@ -53,7 +53,7 @@ public:
     using underlying_t = T;
 
 
-    //#pragma region Getters
+    #pragma region Getters
     const T &getVal() const { return value; }
     const T &getLastVal() const { return lastValue; }
     unsigned getIdx() const { return idx; }
@@ -77,9 +77,9 @@ public:
             useLastVal ? getLastValRepr() : getValRepr()
         };
     }
-    //#pragma endregion Getters
+    #pragma endregion Getters
 
-    //#pragma region Ctor,Dtor
+    #pragma region Ctor,Dtor
     Tracer(const T &value_ = T{}, const char *name_ = DEFAULT_VAR_NAME) :
         value{value_}, name{name_} {
 
@@ -89,9 +89,9 @@ public:
     ~Tracer() {
         onOperation(TracedOp::Dtor, this, nullptr, "");
     }
-    //#pragma endregion Ctor,Dtor
+    #pragma endregion Ctor,Dtor
 
-    //#pragma region Copy,Move
+    #pragma region Copy,Move
     Tracer(const Tracer &other) :
         value{other.value},
         lastValue{other.lastValue},
@@ -128,9 +128,9 @@ public:
         return *this;
     }
     #endif // TRACER_RVALUE_REFS
-    //#pragma endregion Copy,Move
+    #pragma endregion Copy,Move
 
-    //#pragma region Inplace
+    #pragma region Inplace
     #define INPLACE_OP_(OP)                                     \
         Tracer &operator OP(const Tracer &other) {              \
             lastValue = value;                                  \
@@ -153,9 +153,9 @@ public:
     INPLACE_OP_(|=);
 
     #undef INPLACE_OP_
-    //#pragma endregion Inplace
+    #pragma endregion Inplace
 
-    //#pragma region Binary
+    #pragma region Binary
     #define BINARY_OP_(OP)                                      \
         friend Tracer operator OP(Tracer self,                  \
                                   const Tracer &other) {        \
@@ -179,9 +179,9 @@ public:
     BINARY_OP_(|);
 
     #undef BINARY_OP_
-    //#pragma endregion Binary
+    #pragma endregion Binary
 
-    //#pragma region Increments & Decrements
+    #pragma region Increments & Decrements
     Tracer &operator++() {
         lastValue = value;
         ++value;
@@ -215,9 +215,9 @@ public:
 
         return result;
     }
-    //#pragma endregion Increments & Decrements
+    #pragma endregion Increments & Decrements
 
-    //#pragma region Unary
+    #pragma region Unary
     #define UNARY_OP_(OP)                                       \
         friend Tracer operator OP(Tracer self) {                \
             /*self.lastValue = self.value;*/                    \
@@ -233,9 +233,9 @@ public:
     UNARY_OP_(~);
 
     #undef UNARY_OP_
-    //#pragma endregion Unary
+    #pragma endregion Unary
 
-    //#pragma region Cmp
+    #pragma region Cmp
     #define CMP_OP_(OP)                                     \
         bool operator OP(const Tracer &other) const {       \
             bool result = (value OP other.value);           \
@@ -253,7 +253,7 @@ public:
     CMP_OP_(>=);
 
     #undef BINARY_OP_
-    //#pragma endregion Cmp
+    #pragma endregion Cmp
 
 protected:
     static unsigned nextIdx;
