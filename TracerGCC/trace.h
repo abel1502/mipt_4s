@@ -1,7 +1,7 @@
 #pragma once
 #include "general.h"
 #include <vector>
-#include <source_location>
+#include "stdsl.h"
 #include "trace_entry.h"
 
 
