@@ -23,6 +23,7 @@ add_executable(
     trace.cpp
     tracer.cpp
 
+    visualizers/visualizer.cpp
     visualizers/dot.cpp
     visualizers/html.cpp
 )
