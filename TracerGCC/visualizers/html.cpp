@@ -123,8 +123,10 @@ void HtmlTraceVisualizer::logEntry(const TraceEntry &entry) {
         // A new function was entered
 
         logIndent();
+        openTag("i");
         ofile.write(entry.place.func.function_name());
         ofile.write(" {\n");
+        closeTag();
 
         recursionDepth = entry.place.recursionDepth;
     } break;
@@ -135,7 +137,9 @@ void HtmlTraceVisualizer::logEntry(const TraceEntry &entry) {
         recursionDepth = entry.place.recursionDepth;
 
         logIndent();
+        openTag("i");
         ofile.write("}\n");
+        closeTag();
     } break;
 
     case TracedOp::DbgMsg: {
