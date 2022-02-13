@@ -44,9 +44,16 @@ public:
 
     void regEvent(TracedOp op, const TraceEntry::VarInfo &inst,
                   const TraceEntry::VarInfo &other, const char *opStr);
+    
+    /// Warning: Msg has to be persistent - that means, either
+    /// compile-time, or, is you really want to, somehow globally
+    /// stored until the end of the program
+    void addDbgMsg(const char *msg);
 
     inline const std::vector<TraceEntry> &getEntries() const { return entries; }
     inline       std::vector<TraceEntry> &getEntries()       { return entries; }
+
+    TraceEntry::FuncInfo getCurFuncInfo() const;
 
 protected:
     static Trace instance;
@@ -55,6 +62,8 @@ protected:
     std::vector<TraceEntry> entries{};
     TraceFuncGuard *curFunc{nullptr};
     unsigned recursionDepth = 0;
+
+    void addEntry(const TraceEntry &entry);
 
 };
 

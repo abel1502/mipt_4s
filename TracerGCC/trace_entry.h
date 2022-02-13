@@ -4,6 +4,9 @@
 
 
 enum class TracedOp {
+    FuncEnter,  // A special event indicating a function was entered
+    FuncLeave,  // Same, except this time the function was returned from
+    DbgMsg,  // A debug message to be inserted into the log
     Ctor,
     Dtor,
     Copy,
@@ -43,9 +46,9 @@ struct TraceEntry {
         unsigned recursionDepth = -1u;
 
 
-        inline FuncInfo() = default;
+        constexpr FuncInfo() = default;
 
-        inline FuncInfo(const std::source_location &func_, unsigned recursionDepth_) :
+        constexpr FuncInfo(const std::source_location &func_, unsigned recursionDepth_) :
             func{func_}, recursionDepth{recursionDepth_} {}
 
         constexpr bool isSet() const {
@@ -54,6 +57,10 @@ struct TraceEntry {
 
         static constexpr FuncInfo empty() {
             return FuncInfo{};
+        }
+
+        static constexpr FuncInfo globalScope() {
+            return FuncInfo{{}, 0};
         }
     };
 
@@ -72,4 +79,10 @@ struct TraceEntry {
         op{op_}, inst{inst_},
         other{other_}, opStr{opStr_},
         place{place_} {}
+
+    static inline TraceEntry funcSwitch(const FuncInfo &place_, bool entered) {
+        return TraceEntry{entered ? TracedOp::FuncEnter : TracedOp::FuncLeave,
+                          TraceEntry::VarInfo::empty(), TraceEntry::VarInfo::empty(),
+                          "", place_};
+    }
 };

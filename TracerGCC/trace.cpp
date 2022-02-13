@@ -28,23 +28,39 @@ TraceFuncGuard *Trace::pushFunc(TraceFuncGuard *next) {
     curFunc = next;
     ++recursionDepth;
 
+    addEntry(TraceEntry::funcSwitch(getCurFuncInfo(), true));
+
     return prev;
 }
 
 void Trace::popFunc(TraceFuncGuard *cur, TraceFuncGuard *prev) {
     assert(curFunc == cur);
+    assert(recursionDepth > 0);
 
     curFunc = prev;
     --recursionDepth;
+
+    addEntry(TraceEntry::funcSwitch(getCurFuncInfo(), false));
 }
 
 void Trace::regEvent(TracedOp op, const TraceEntry::VarInfo &inst,
                      const TraceEntry::VarInfo &other, const char *opStr) {
-    TraceEntry::FuncInfo funcInfo{};
-    if (curFunc) {
-        funcInfo.func = curFunc->getPlace();
-        funcInfo.recursionDepth = recursionDepth;
-    }
+    addEntry(TraceEntry{op, inst, other, opStr, getCurFuncInfo()});
+}
 
-    entries.emplace_back(op, inst, other, opStr, funcInfo);
+void Trace::addDbgMsg(const char *msg) {
+    addEntry(TraceEntry{TracedOp::DbgMsg,
+                        TraceEntry::VarInfo::empty(),
+                        TraceEntry::VarInfo::empty(),
+                        msg, getCurFuncInfo()});
+}
+
+TraceEntry::FuncInfo Trace::getCurFuncInfo() const {
+    return curFunc ?
+           TraceEntry::FuncInfo{curFunc->getPlace(), recursionDepth} :
+           TraceEntry::FuncInfo::globalScope();
+}
+
+void Trace::addEntry(const TraceEntry &entry) {
+    entries.push_back(entry);
 }
