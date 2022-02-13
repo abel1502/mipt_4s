@@ -47,7 +47,8 @@ void addToTrace(TracedOp op, const TraceEntry::VarInfo &inst,
 template <typename T>
 class Tracer {
 public:
-    static constexpr const char DEFAULT_VAR_NAME[] = "&lt;unnamed&gt;";
+    // TODO: Move to VarInfo?
+    static constexpr const char DEFAULT_VAR_NAME[] = "<i>&lt;?&gt;</i>";
 
 
     using underlying_t = T;
@@ -334,7 +335,8 @@ protected:
             _log(WF_ " %s " WF_ " ?", WA_(inst, ), opStr, WA_(other, ));
             break;
 
-        NODEFAULT
+        default:
+            break;
         }
 
         #undef WF_
