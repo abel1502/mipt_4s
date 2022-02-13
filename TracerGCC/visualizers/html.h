@@ -11,10 +11,15 @@ protected:
     class WriteProxy;
 
 public:
-    // You should avoid saving the result into 
-    WriteProxy writeOpen(OutputFile &ofile);
-    void writeClose(OutputFile &ofile);
-    WriteProxy writeInline(OutputFile &ofile);
+    inline HtmlTag(const char *tag_) :
+        tag{tag_} {}
+
+    // You should avoid saving the results into variables
+    WriteProxy writeOpen(OutputFile &ofile) const;
+    void writeClose(OutputFile &ofile) const;
+    WriteProxy writeInline(OutputFile &ofile) const;
+
+    inline const char *getTag() const { return tag; }
 
 protected:
     const char *tag = "";
@@ -53,8 +58,46 @@ public:
 
 protected:
     std::vector<HtmlTag> tagStack{};
+    unsigned recursionDepth = 0;
 
     void beginLog();
     void endLog();
 
+    void dumpStyle();
+
+    const HtmlTag &pushTag(const char *tag);
+    HtmlTag popTag();
+
+    inline auto openTag(const char *tag);
+    inline auto inlineTag(const char *tag);
+    inline void closeTag(const char *tag);
+    inline void closeTag();
+
+    inline unsigned getIndent() const {
+        return recursionDepth * 4;
+    }
+
+    void logEntry(const TraceEntry &entry);
+    void logVarInfo(const TraceEntry::VarInfo &info);
+    void logIndent();
+
 };
+
+
+inline auto HtmlTraceVisualizer::openTag(const char *tag) {
+    return pushTag(tag).writeOpen(ofile);
+}
+
+inline auto HtmlTraceVisualizer::inlineTag(const char *tag) {
+    return pushTag(tag).writeInline(ofile);
+}
+
+inline void HtmlTraceVisualizer::closeTag(const char *tag) {
+    REQUIRE(tagStack.back().getTag() == std::string_view{tag});
+
+    closeTag();
+}
+
+inline void HtmlTraceVisualizer::closeTag() {
+    popTag().writeClose(ofile);
+}
