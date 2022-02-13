@@ -11,16 +11,26 @@ public:
     OutputFile(const std::fs::path &path_, bool cumulative_ = false);
 
     inline bool isOpen() const {
-        return curFile.is_open();
+        return file.is_open();
     }
 
     void open();
     void forceFlush();
     void close();
 
-    void write  (const std::string_view &data);
-    void writeln(const std::string_view &data);
     void writeln();
+    void writef(const char *fmt, ...);
+    
+    template <typename T>
+    void write(const T &obj) {
+        file << obj;
+    }
+
+    template <typename T>
+    void writeln(const T &obj) {
+        write(obj);
+        writeln();
+    }
 
     void indent(unsigned amount, char chr = ' ');
 
@@ -28,7 +38,7 @@ protected:
     std::fs::path path;
     bool cumulative = false;
 
-    std::ofstream curFile{};
+    std::ofstream file{};
 
 };
 
@@ -37,13 +47,14 @@ class TraceVisualizer {
 public:
     virtual void visualize(const Trace &trace) = 0;
 
-    virtual ~TraceVisualizer();
+    virtual ~TraceVisualizer() = default;
 
 protected:
     OutputFile ofile;
 
 
-    TraceVisualizer(const std::fs::path &path, bool cumulative = false);
+    inline TraceVisualizer(const std::fs::path &path, bool cumulative = false) :
+        ofile{path, cumulative} {}
     
 };
 
