@@ -82,7 +82,11 @@ int main() {
         doMoreStuff(nums);
     }
 
-    HtmlTraceVisualizer visualizer{"./output/log.html", false};
+    std::fs::path logPathHtml = "./output/log.html";
+    if (std::fs::current_path().stem() == "build") {
+        logPathHtml = "../output/log.html";
+    }
+    HtmlTraceVisualizer visualizer{logPathHtml, false};
     visualizer.visualize(Trace::getInstance());
 
     return 0;
