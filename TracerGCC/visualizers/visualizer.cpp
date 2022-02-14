@@ -42,7 +42,12 @@ void OutputFile::writef(const char *fmt, ...) {
     int writtenSize = vsnprintf(result.data(), reqSize + 1, fmt, args);
     va_end(args);
 
-    assert(writtenSize >= 0 && writtenSize <= reqSize);
+    assert(writtenSize > 0 && writtenSize <= reqSize);
+
+    result.resize(writtenSize);
+
+    write(result);
+}
 
     write(result);
 }
