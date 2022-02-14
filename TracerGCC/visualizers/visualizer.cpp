@@ -49,7 +49,30 @@ void OutputFile::writef(const char *fmt, ...) {
     write(result);
 }
 
+void OutputFile::writefa(unsigned alignment, const char *fmt, ...) {
+    va_list args{};
+
+    va_start(args, fmt);
+    int reqSize = vsnprintf(nullptr, 0, fmt, args);
+    va_end(args);
+
+    assert(reqSize >= 0);
+    
+    std::string result{};
+    result.resize(reqSize + 1);
+
+    va_start(args, fmt);
+    int writtenSize = vsnprintf(result.data(), reqSize + 1, fmt, args);
+    va_end(args);
+
+    assert(writtenSize > 0 && writtenSize <= reqSize);
+
+    result.resize(writtenSize);
+
     write(result);
+    for (; (unsigned)writtenSize < alignment; ++writtenSize) {
+        write(' ');
+    }
 }
 
 void OutputFile::indent(unsigned amount, char chr) {

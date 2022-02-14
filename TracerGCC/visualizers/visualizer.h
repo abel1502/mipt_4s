@@ -20,6 +20,7 @@ public:
 
     void writeln();
     void writef(const char *fmt, ...);
+    void writefa(unsigned alignment, const char *fmt, ...);
     
     template <typename T>
     void write(const T &obj) {
@@ -57,4 +58,3 @@ protected:
         ofile{path, cumulative} {}
     
 };
-

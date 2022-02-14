@@ -116,7 +116,7 @@ HtmlTag HtmlTraceVisualizer::popTag() {
 }
 
 void HtmlTraceVisualizer::logEntry(const TraceEntry &entry) {
-    // constexpr unsigned LABEL_WIDTH = 10;  // Just for reference
+    constexpr unsigned LABEL_WIDTH = 10;  // Just for reference
 
     switch (entry.op) {
     case TracedOp::FuncEnter: {
@@ -146,7 +146,7 @@ void HtmlTraceVisualizer::logEntry(const TraceEntry &entry) {
         logIndent();
 
         openTag("font").arg("color", "#808080");
-        ofile.write("[dbg] " /*"    "*/);
+        ofile.write("[dbg] ");
         openTag("i");
         ofile.write(entry.opStr);
         closeTag();
@@ -159,7 +159,7 @@ void HtmlTraceVisualizer::logEntry(const TraceEntry &entry) {
         logIndent();
 
         openTag("font").arg("color", "#40C040");
-        ofile.write("ctor      ");
+        ofile.writefa(LABEL_WIDTH, "ctor");
         closeTag();
         logVarInfo(entry.inst);
 
@@ -170,7 +170,7 @@ void HtmlTraceVisualizer::logEntry(const TraceEntry &entry) {
         logIndent();
 
         openTag("font").arg("color", "#C04040");
-        ofile.write("dtor      ");
+        ofile.writefa(LABEL_WIDTH, "dtor");
         closeTag();
         logVarInfo(entry.inst);
 
@@ -182,7 +182,7 @@ void HtmlTraceVisualizer::logEntry(const TraceEntry &entry) {
 
         openTag("font").arg("color", "#F00000");
         openTag("b");
-        ofile.write("COPY      ");
+        ofile.writefa(LABEL_WIDTH, "COPY");
         closeTag();
         closeTag();
 
@@ -198,7 +198,7 @@ void HtmlTraceVisualizer::logEntry(const TraceEntry &entry) {
 
         openTag("font").arg("color", "#00F000");
         openTag("b");
-        ofile.write("MOVE      ");
+        ofile.writefa(LABEL_WIDTH, "MOVE");
         closeTag();
         closeTag();
 
@@ -217,7 +217,7 @@ void HtmlTraceVisualizer::logEntry(const TraceEntry &entry) {
         openTag("font").arg("color", "#6060C0");
         ofile.write("bin");
         closeTag();
-        ofile.writef("(%-3s)  ", entry.opStr);
+        ofile.writefa(LABEL_WIDTH - 3, "(%s)", entry.opStr);
         logVarInfo(entry.inst);
         ofile.write(" with ");
         logVarInfo(entry.other);
@@ -231,11 +231,11 @@ void HtmlTraceVisualizer::logEntry(const TraceEntry &entry) {
         openTag("font").arg("color", "#6060C0");
         ofile.write("un");
         closeTag();
-        const char *fmt = "(%-2s)     ";  // Prefix version
+        const char *fmt = "(%s)";  // Prefix version
         if (entry.other.isSet()) {  // Postfix version
-            fmt = "(%-2s.)   ";
+            fmt = "(%s.)";
         }
-        ofile.writef(fmt, entry.opStr);
+        ofile.writefa(LABEL_WIDTH - 2, fmt, entry.opStr);
         logVarInfo(entry.inst);
 
         ofile.writeln();
