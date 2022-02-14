@@ -67,7 +67,7 @@ HtmlTraceVisualizer::~HtmlTraceVisualizer() {
 void HtmlTraceVisualizer::beginLog() {
     ofile.open();
 
-    openTag("body").arg("class", "main_body");
+    openTag("body").arg("class", "main-body");
 
     openTag("style");
     dumpStyle();
@@ -91,14 +91,56 @@ void HtmlTraceVisualizer::endLog() {
 
 void HtmlTraceVisualizer::dumpStyle() {
     ofile.write(
-        ".main_body {\n"
+        ".main-body {\n"
         "    background-color: black;\n"
         "    color: white;\n"
         "    font-size: 18px;\n"
         "}\n"
         "\n"
-        ".var_info {\n"
+        ".var-info {\n"
         "    font-size: 0.6em;\n"
+        "}\n"
+        "\n"
+        ".func-info {\n"
+        "    font-style: italic;\n"
+        "}\n"
+        "\n"
+        ".dbg-msg {\n"
+        "    color: #808080;\n"
+        "}\n"
+        "\n"
+        ".label {\n"
+        "    display: inline-block;\n"
+        "    width: 10ch;\n"
+        "}\n"
+        "\n"
+        ".label-ctor {\n"
+        "    color: #40C040;\n"
+        "}\n"
+        ".label-dtor {\n"
+        "    color: #C04040;\n"
+        "}\n"
+        ".label-copy {\n"
+        "    color: #F00000;\n"
+        "    font-weight: bold;\n"
+        "}\n"
+        ".label-move {\n"
+        "    color: #00F000;\n"
+        "    font-weight: bold;\n"
+        "}\n"
+        ".label-bin {\n"
+        "    color: #6060C0;\n"
+        "}\n"
+        ".label-un {\n"
+        "    color: #6060C0;\n"
+        "}\n"
+        "\n"
+        ".var-info-idx {\n"
+        "    color: orange;\n"
+        "}\n"
+        "\n"
+        ".var-info-cell {\n"
+        "    color: #60e0f0;\n"
         "}\n"
     );
 }
@@ -116,14 +158,12 @@ HtmlTag HtmlTraceVisualizer::popTag() {
 }
 
 void HtmlTraceVisualizer::logEntry(const TraceEntry &entry) {
-    constexpr unsigned LABEL_WIDTH = 10;  // Just for reference
-
     switch (entry.op) {
     case TracedOp::FuncEnter: {
         // A new function was entered
 
         logIndent();
-        openTag("i");
+        openTag("span").arg("class", "func-info");
         ofile.write(entry.place.func.function_name());
         ofile.write(" {\n");
         closeTag();
@@ -137,7 +177,7 @@ void HtmlTraceVisualizer::logEntry(const TraceEntry &entry) {
         recursionDepth = entry.place.recursionDepth;
 
         logIndent();
-        openTag("i");
+        openTag("span").arg("class", "func-info");
         ofile.write("}\n");
         closeTag();
     } break;
@@ -145,7 +185,7 @@ void HtmlTraceVisualizer::logEntry(const TraceEntry &entry) {
     case TracedOp::DbgMsg: {
         logIndent();
 
-        openTag("font").arg("color", "#808080");
+        openTag("span").arg("class", "dbg-msg");
         ofile.write("[dbg] ");
         openTag("i");
         ofile.write(entry.opStr);
@@ -158,8 +198,8 @@ void HtmlTraceVisualizer::logEntry(const TraceEntry &entry) {
     case TracedOp::Ctor: {
         logIndent();
 
-        openTag("font").arg("color", "#40C040");
-        ofile.writefa(LABEL_WIDTH, "ctor");
+        openTag("span").arg("class", "label label-ctor");
+        ofile.writef("ctor");
         closeTag();
         logVarInfo(entry.inst);
 
@@ -169,8 +209,8 @@ void HtmlTraceVisualizer::logEntry(const TraceEntry &entry) {
     case TracedOp::Dtor: {
         logIndent();
 
-        openTag("font").arg("color", "#C04040");
-        ofile.writefa(LABEL_WIDTH, "dtor");
+        openTag("span").arg("class", "label label-dtor");
+        ofile.writef("dtor");
         closeTag();
         logVarInfo(entry.inst);
 
@@ -180,10 +220,8 @@ void HtmlTraceVisualizer::logEntry(const TraceEntry &entry) {
     case TracedOp::Copy: {
         logIndent();
 
-        openTag("font").arg("color", "#F00000");
-        openTag("b");
-        ofile.writefa(LABEL_WIDTH, "COPY");
-        closeTag();
+        openTag("span").arg("class", "label label-copy");
+        ofile.writef("COPY");
         closeTag();
 
         logVarInfo(entry.inst);
@@ -196,10 +234,8 @@ void HtmlTraceVisualizer::logEntry(const TraceEntry &entry) {
     case TracedOp::Move: {
         logIndent();
 
-        openTag("font").arg("color", "#00F000");
-        openTag("b");
-        ofile.writefa(LABEL_WIDTH, "MOVE");
-        closeTag();
+        openTag("span").arg("class", "label label-move");
+        ofile.writef("MOVE");
         closeTag();
 
         logVarInfo(entry.inst);
@@ -214,10 +250,10 @@ void HtmlTraceVisualizer::logEntry(const TraceEntry &entry) {
     case TracedOp::Cmp: {
         logIndent();
         
-        openTag("font").arg("color", "#6060C0");
+        openTag("span").arg("class", "label label-bin");
         ofile.write("bin");
         closeTag();
-        ofile.writefa(LABEL_WIDTH - 3, "(%s)", entry.opStr);
+        ofile.writef("(%s)", entry.opStr);
         logVarInfo(entry.inst);
         ofile.write(" with ");
         logVarInfo(entry.other);
@@ -228,14 +264,14 @@ void HtmlTraceVisualizer::logEntry(const TraceEntry &entry) {
     case TracedOp::Unary: {
         logIndent();
         
-        openTag("font").arg("color", "#6060C0");
+        openTag("span").arg("class", "label label-un");
         ofile.write("un");
         closeTag();
         const char *fmt = "(%s)";  // Prefix version
         if (entry.other.isSet()) {  // Postfix version
             fmt = "(%s.)";
         }
-        ofile.writefa(LABEL_WIDTH - 2, fmt, entry.opStr);
+        ofile.writef(fmt, entry.opStr);
         logVarInfo(entry.inst);
 
         ofile.writeln();
@@ -248,8 +284,20 @@ void HtmlTraceVisualizer::logEntry(const TraceEntry &entry) {
 void HtmlTraceVisualizer::logVarInfo(const TraceEntry::VarInfo &info) {
     // TODO: Handle default name specially
     ofile.write(info.name);
-    openTag("span").arg("class", "var_info");
-    ofile.writef("(#%u)[%p](val=%s)", info.idx, info.addr, info.valRepr.c_str());
+    openTag("span").arg("class", "var-info");
+
+    // ofile.writef("(#%u)[%p:%u](val=%s)", info.idx, info.addr, getPtrCell(info.addr), info.valRepr.c_str());
+
+    ofile.write("(");
+    openTag("span").arg("class", "var-info-idx");
+    ofile.writef("#%u", info.idx);
+    closeTag();
+    ofile.writef(")[%p:", info.addr);
+    openTag("span").arg("class", "var-info-cell");
+    ofile.writef("%u", getPtrCell(info.addr));
+    closeTag();
+    ofile.writef("](val=%s)", info.valRepr.c_str());
+
     closeTag();
 }
 

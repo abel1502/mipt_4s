@@ -4,6 +4,7 @@
 #include "../stdfs.h"
 #include <fstream>
 #include <vector>
+#include <map>
 
 
 class HtmlTag {
@@ -59,6 +60,8 @@ public:
 protected:
     std::vector<HtmlTag> tagStack{};
     unsigned recursionDepth = 0;
+    std::map<const void *, unsigned> ptrCells{};
+    unsigned ptrCellCounter = 0;
 
     void beginLog();
     void endLog();
@@ -81,6 +84,8 @@ protected:
     void logVarInfo(const TraceEntry::VarInfo &info);
     void logIndent();
 
+    inline unsigned getPtrCell(const void *addr);
+
 };
 
 
@@ -100,4 +105,12 @@ inline void HtmlTraceVisualizer::closeTag(const char *tag) {
 
 inline void HtmlTraceVisualizer::closeTag() {
     popTag().writeClose(ofile);
+}
+
+inline unsigned HtmlTraceVisualizer::getPtrCell(const void *addr) {
+    if (!ptrCells.contains(addr)) {
+        ptrCells[addr] = ptrCellCounter++;
+    }
+
+    return ptrCells[addr];
 }
