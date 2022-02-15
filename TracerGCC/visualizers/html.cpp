@@ -94,6 +94,10 @@ void HtmlTraceVisualizer::beginLog() {
     dumpStyle();
     closeTag("style");
 
+    openTag("script");
+    dumpScript();
+    closeTag("script");
+
     openTag("pre");
 }
 
@@ -156,6 +160,10 @@ void HtmlTraceVisualizer::dumpStyle() {
         "    color: #6060C0;\n"
         "}\n"
         "\n"
+        ".opstr {\n"
+        "    color: white;\n"
+        "}\n"
+        "\n"
         ".var-info-idx {\n"
         "    color: orange;\n"
         "}\n"
@@ -163,6 +171,37 @@ void HtmlTraceVisualizer::dumpStyle() {
         ".var-info-cell {\n"
         "    color: #60e0f0;\n"
         "}\n"
+        "\n"
+        "@keyframes blink {\n"
+        "    from { "/*background: transparent;*/" }\n"
+        "    50%  { background: #f0c000; }\n"
+        "    to   { "/*background: transparent;*/" }\n"
+        "}\n"
+        "\n"
+        ".main-body .label a {\n"
+        "    color: inherit;\n"
+        "    text-decoration: none;\n"
+        "}\n"
+        "\n"
+    );
+}
+
+void HtmlTraceVisualizer::dumpScript() {
+    ofile.write(
+        "window.addEventListener('load', (event) => {\n"
+        "    document.querySelectorAll('a[href^=\"#\"]').forEach(anchor => {\n"
+        "        anchor.addEventListener('click', function (e) {\n"
+        "            e.preventDefault();\n"
+        "            \n"
+        "            let target = document.querySelector(this.getAttribute('href'));\n"
+        "            target.scrollIntoView({ behavior: 'smooth', block: 'nearest' });\n"
+        "            target.style.animation = 'none';\n"
+        "            target.offsetHeight;  // Should trigger a reflow\n"
+        "            target.style.animation = 'blink 1.5s ease 0.1s 1';\n"
+        "        });\n"
+        "    });\n"
+        "});\n"
+        "\n"
     );
 }
 
@@ -219,44 +258,61 @@ void HtmlTraceVisualizer::logEntry(const TraceEntry &entry) {
     case TracedOp::Ctor: {
         logIndent();
 
-        openTag("span").arg("class", "label label-ctor");
-        ofile.writef("ctor");
+        openTag("span")
+            .arg("class", "label label-ctor")
+            .argf("id", "label-ctor-%u", entry.inst.idx);
+        openTag("a").argf("href", "#label-dtor-%u", entry.inst.idx);
+        ofile.write("ctor");
+        closeTag();
         closeTag();
         logVarInfo(entry.inst);
 
         ofile.writeln();
+
+        onVarCreated(entry.inst.idx);
     } break;
 
     case TracedOp::Dtor: {
         logIndent();
 
-        openTag("span").arg("class", "label label-dtor");
-        ofile.writef("dtor");
+        openTag("span")
+            .arg("class", "label label-dtor")
+            .argf("id", "label-dtor-%u", entry.inst.idx);
+        openTag("a").argf("href", "#label-ctor-%u", entry.inst.idx);
+        ofile.write("dtor");
+        closeTag();
         closeTag();
         logVarInfo(entry.inst);
 
         ofile.writeln();
     } break;
 
-    case TracedOp::Copy: {
-        logIndent();
-
-        openTag("span").arg("class", "label label-copy");
-        ofile.writef("COPY");
-        closeTag();
-
-        logVarInfo(entry.inst);
-        ofile.write(" from ");
-        logVarInfo(entry.other);
-
-        ofile.writeln();
-    } break;
-
+    case TracedOp::Copy:
     case TracedOp::Move: {
         logIndent();
 
-        openTag("span").arg("class", "label label-move");
-        ofile.writef("MOVE");
+        bool isCtor = !wasVarCreated(entry.inst.idx);
+        bool isCopy = entry.op == TracedOp::Copy;
+
+        {
+            auto tmp = openTag("span");
+            tmp.argf("class", "label label-%s", isCopy ? "copy" : "move");
+            if (isCtor) {
+                tmp.argf("id", "label-ctor-%u", entry.inst.idx);
+            }
+        }
+        if (isCtor) {
+            openTag("a").argf("href", "#label-dtor-%u", entry.inst.idx);
+        }
+        ofile.write(isCopy ? "COPY" : "MOVE");
+        if (!isCtor) {
+            openTag("span").arg("class", "opstr");
+            ofile.write("(=)");
+            closeTag();
+        }
+        if (isCtor) {
+            closeTag("a");
+        }
         closeTag();
 
         logVarInfo(entry.inst);
@@ -264,6 +320,8 @@ void HtmlTraceVisualizer::logEntry(const TraceEntry &entry) {
         logVarInfo(entry.other);
 
         ofile.writeln();
+
+        onVarCreated(entry.inst.idx);
     } break;
 
     case TracedOp::Inplace:
@@ -273,8 +331,10 @@ void HtmlTraceVisualizer::logEntry(const TraceEntry &entry) {
         
         openTag("span").arg("class", "label label-bin");
         ofile.write("bin");
-        closeTag();
+        openTag("span").arg("class", "opstr");
         ofile.writef("(%s)", entry.opStr);
+        closeTag();
+        closeTag();
         logVarInfo(entry.inst);
         ofile.write(" with ");
         logVarInfo(entry.other);
@@ -286,7 +346,9 @@ void HtmlTraceVisualizer::logEntry(const TraceEntry &entry) {
         logIndent();
         
         openTag("span").arg("class", "label label-un");
+        openTag("span").arg("class", "opstr");
         ofile.write("un");
+        closeTag();
         closeTag();
         const char *fmt = "(%s)";  // Prefix version
         if (entry.other.isSet()) {  // Postfix version
@@ -310,7 +372,9 @@ void HtmlTraceVisualizer::logVarInfo(const TraceEntry::VarInfo &info) {
     // ofile.writef("(#%u)[%p:%u](val=%s)", info.idx, info.addr, getPtrCell(info.addr), info.valRepr.c_str());
 
     ofile.write("(");
-    openTag("span").arg("class", "var-info-idx");
+    openTag("a")
+        .arg("class", "var-info-idx")
+        .argf("href", "#label-ctor-%u", info.idx);
     ofile.writef("#%u", info.idx);
     closeTag();
     ofile.writef(")[%p:", info.addr);

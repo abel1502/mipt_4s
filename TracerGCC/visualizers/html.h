@@ -66,11 +66,14 @@ protected:
     unsigned recursionDepth = 0;
     std::map<const void *, unsigned> ptrCells{};
     unsigned ptrCellCounter = 0;
+    std::vector<bool> created;  // TODO: flag varibales as created. Use for labels on copy ctors
+
 
     void beginLog();
     void endLog();
 
     void dumpStyle();
+    void dumpScript();
 
     const HtmlTag &pushTag(const char *tag);
     HtmlTag popTag();
@@ -89,6 +92,8 @@ protected:
     void logIndent();
 
     inline unsigned getPtrCell(const void *addr);
+    inline void onVarCreated(unsigned idx);
+    inline bool wasVarCreated(unsigned idx) const;
 
 };
 
@@ -117,4 +122,16 @@ inline unsigned HtmlTraceVisualizer::getPtrCell(const void *addr) {
     }
 
     return ptrCells[addr];
+}
+
+inline void HtmlTraceVisualizer::onVarCreated(unsigned idx) {
+    if (idx >= created.size()) {
+        created.resize((size_t)idx + 1);
+    }
+
+    created[idx] = true;
+}
+
+inline bool HtmlTraceVisualizer::wasVarCreated(unsigned idx) const {
+    return idx < created.size() ? created[idx] : false;
 }
