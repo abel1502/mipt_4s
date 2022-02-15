@@ -162,6 +162,7 @@ void HtmlTraceVisualizer::dumpStyle() {
         "\n"
         ".opstr {\n"
         "    color: white;\n"
+        "    font-weight: normal;\n"
         "}\n"
         "\n"
         ".var-info-idx {\n"
