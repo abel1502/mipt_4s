@@ -369,7 +369,7 @@ void HtmlTraceVisualizer::logVarInfo(const TraceEntry::VarInfo &info) {
     ofile.write(info.name);
     openTag("span").arg("class", "var-info");
 
-    // ofile.writef("(#%u)[%p:%u](val=%s)", info.idx, info.addr, getPtrCell(info.addr), info.valRepr.c_str());
+    // ofile.writef("(#%u)[%p:%u](val=%s)", info.idx, info.addr, ptrCells.get(info.addr), info.valRepr.c_str());
 
     ofile.write("(");
     openTag("a")
@@ -379,7 +379,7 @@ void HtmlTraceVisualizer::logVarInfo(const TraceEntry::VarInfo &info) {
     closeTag();
     ofile.writef(")[%p:", info.addr);
     openTag("span").arg("class", "var-info-cell");
-    ofile.writef("%u", getPtrCell(info.addr));
+    ofile.writef("%u", ptrCells.get(info.addr));
     closeTag();
     ofile.writef("](val=%s)", info.valRepr.c_str());
 

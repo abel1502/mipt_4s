@@ -1,8 +1,7 @@
 #pragma once
 #include "../general.h"
 #include "visualizer.h"
-#include "../stdfs.h"
-#include <fstream>
+#include "../helpers.h"
 #include <vector>
 #include <map>
 
@@ -54,8 +53,8 @@ protected:
 
 class HtmlTraceVisualizer : public TraceVisualizer {
 public:
-    inline HtmlTraceVisualizer(const std::fs::path &outputFile, bool cumulative = false) :
-        TraceVisualizer(outputFile, cumulative) {}
+    inline HtmlTraceVisualizer(const std::fs::path &outputFile) :
+        TraceVisualizer(outputFile) {}
 
     virtual void visualize(const Trace &trace) override;
 
@@ -64,9 +63,8 @@ public:
 protected:
     std::vector<HtmlTag> tagStack{};
     unsigned recursionDepth = 0;
-    std::map<const void *, unsigned> ptrCells{};
-    unsigned ptrCellCounter = 0;
-    std::vector<bool> created;  // TODO: flag varibales as created. Use for labels on copy ctors
+    helpers::CounterMap<const void *, unsigned> ptrCells{};
+    helpers::FlagMap created{};
 
 
     void beginLog();
@@ -91,7 +89,6 @@ protected:
     void logVarInfo(const TraceEntry::VarInfo &info);
     void logIndent();
 
-    inline unsigned getPtrCell(const void *addr);
     inline void onVarCreated(unsigned idx);
     inline bool wasVarCreated(unsigned idx) const;
 
@@ -116,22 +113,10 @@ inline void HtmlTraceVisualizer::closeTag() {
     popTag().writeClose(ofile);
 }
 
-inline unsigned HtmlTraceVisualizer::getPtrCell(const void *addr) {
-    if (!ptrCells.contains(addr)) {
-        ptrCells[addr] = ptrCellCounter++;
-    }
-
-    return ptrCells[addr];
-}
-
 inline void HtmlTraceVisualizer::onVarCreated(unsigned idx) {
-    if (idx >= created.size()) {
-        created.resize((size_t)idx + 1);
-    }
-
-    created[idx] = true;
+    created.set(idx);
 }
 
 inline bool HtmlTraceVisualizer::wasVarCreated(unsigned idx) const {
-    return idx < created.size() ? created[idx] : false;
+    return created.get(idx);
 }

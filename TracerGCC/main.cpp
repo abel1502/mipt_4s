@@ -100,7 +100,7 @@ int main() {
         logPath = "../output/";
     }
 
-    HtmlTraceVisualizer visualizer{std::fs::path{logPath}.append("log.html"), false};
+    HtmlTraceVisualizer visualizer{std::fs::path{logPath}.append("log.html")};
     visualizer.visualize(Trace::getInstance());
 
     return 0;
