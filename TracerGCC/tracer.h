@@ -7,7 +7,10 @@
 
 
 // Uncomment to include move-semantics-related operations
-//#define TRACER_RVALUE_REFS
+// #define TRACER_RVALUE_REFS
+
+// Uncomment to copy the results inside arguments for binary and unary operators
+// #define TRACER_COPY_IN_ARGS
 
 
 #define DECL_TVAR(T, NAME, ...) \
@@ -157,6 +160,7 @@ public:
     #pragma endregion Inplace
 
     #pragma region Binary
+    #ifdef TRACER_COPY_IN_ARGS
     #define BINARY_OP_(OP)                                      \
         friend Tracer operator OP(Tracer self,                  \
                                   const Tracer &other) {        \
@@ -167,6 +171,18 @@ public:
                                                                 \
             return self;                                        \
         }
+    #else
+    #define BINARY_OP_(OP)                                      \
+        Tracer operator OP(const Tracer &other) const {         \
+            Tracer self{*this};                                 \
+            self.lastValue = self.value;                        \
+            self.value OP##= other.value;                       \
+                                                                \
+            onOperation(TracedOp::Binary, &self, &other, #OP);  \
+                                                                \
+            return self;                                        \
+        }
+    #endif
 
     BINARY_OP_(+);
     BINARY_OP_(-);
@@ -219,6 +235,7 @@ public:
     #pragma endregion Increments & Decrements
 
     #pragma region Unary
+    #ifdef TRACER_COPY_IN_ARGS
     #define UNARY_OP_(OP)                                       \
         friend Tracer operator OP(Tracer self) {                \
             /*self.lastValue = self.value;*/                    \
@@ -228,6 +245,18 @@ public:
                                                                 \
             return self;                                        \
         }
+    #else
+    #define UNARY_OP_(OP)                                       \
+        Tracer operator OP() const {                            \
+            Tracer self{*this};                                 \
+            /*self.lastValue = self.value;*/                    \
+            self.value = OP self.value;                         \
+                                                                \
+            onOperation(TracedOp::Unary, &self, nullptr, #OP);  \
+                                                                \
+            return self;                                        \
+        }
+    #endif
 
     UNARY_OP_(+);
     UNARY_OP_(-);
