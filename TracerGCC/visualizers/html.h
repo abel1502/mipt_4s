@@ -30,6 +30,10 @@ protected:
     public:
         WriteProxy &arg(const char *name, const std::string_view &value);
 
+        WriteProxy &arg(const char *name);
+
+        WriteProxy &argf(const char *name, const char *fmt, ...);
+
         ~WriteProxy();
 
     protected:

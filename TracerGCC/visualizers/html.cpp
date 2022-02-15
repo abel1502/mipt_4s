@@ -1,4 +1,5 @@
 #include "html.h"
+#include <cstdarg>
 
 
 #pragma region HtmlTag
@@ -35,6 +36,26 @@ HtmlTag::WriteProxy &HtmlTag::WriteProxy::arg(const char *name, const std::strin
     ofile.write(name);
     ofile.write("=\"");
     ofile.write(value);
+    ofile.write("\"");
+
+    return *this;
+}
+
+HtmlTag::WriteProxy &HtmlTag::WriteProxy::arg(const char *name) {
+    ofile.write(" ");
+    ofile.write(name);
+
+    return *this;
+}
+
+HtmlTag::WriteProxy &HtmlTag::WriteProxy::argf(const char *name, const char *fmt, ...) {
+    ofile.write(" ");
+    ofile.write(name);
+    ofile.write("=\"");
+    va_list args{};
+    va_start(args, fmt);
+    ofile.writefv(fmt, args);
+    va_end(args);
     ofile.write("\"");
 
     return *this;
