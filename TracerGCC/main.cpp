@@ -52,6 +52,16 @@ static void doMoreStuff(const std::vector<wrapper_t> &nums) {
     printf("The product is: %d\n", (int)product);
 }
 
+static void doMaxsStuff() {
+    FUNC_GUARD;
+
+    DECL_TVAR(int, a, 99);
+    DECL_TVAR(int, b, 3);
+    DECL_TVAR(int, c, 0);
+
+    c = a + b;
+}
+
 
 int main() {
     abel::verbosity = 2;
@@ -80,6 +90,9 @@ int main() {
 
         Trace::getInstance().addDbgMsg("Other stuff");
         doMoreStuff(nums);
+
+        Trace::getInstance().addDbgMsg("Max's stuff");
+        doMaxsStuff();
     }
 
     std::fs::path logPath = "./output/";
