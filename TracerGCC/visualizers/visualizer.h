@@ -20,6 +20,7 @@ public:
 
     void writeln();
     void writef(const char *fmt, ...);
+    void writefv(const char *fmt, va_list args);
     void writefa(unsigned alignment, const char *fmt, ...);
     
     template <typename T>

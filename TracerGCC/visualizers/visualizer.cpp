@@ -30,17 +30,23 @@ void OutputFile::writef(const char *fmt, ...) {
     va_list args{};
 
     va_start(args, fmt);
-    int reqSize = vsnprintf(nullptr, 0, fmt, args);
+    writefv(fmt, args);
     va_end(args);
+}
+
+void OutputFile::writefv(const char *fmt, va_list args) {
+    va_list args2{};
+
+    va_copy(args2, args);
+    int reqSize = vsnprintf(nullptr, 0, fmt, args2);
+    va_end(args2);
 
     assert(reqSize >= 0);
     
     std::string result{};
     result.resize(reqSize + 1);
 
-    va_start(args, fmt);
     int writtenSize = vsnprintf(result.data(), reqSize + 1, fmt, args);
-    va_end(args);
 
     assert(writtenSize > 0 && writtenSize <= reqSize);
 
