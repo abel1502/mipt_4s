@@ -2,6 +2,7 @@
 #include "tracer.h"
 #include "trace.h"
 #include "visualizers/html.h"
+#include "visualizers/dot.h"
 
 
 using num_t = int;
@@ -68,6 +69,9 @@ int main() {
 
     Trace::getInstance().reset();
 
+    Trace::getInstance().addDbgMsg("Varibale info format: name (#index)[address:ptr cell](val=value)");
+    Trace::getInstance().addDbgMsg("For example: counter (#5)[0xffff0000:2](val=123)");
+
     {
         FUNC_GUARD;
 
@@ -96,12 +100,12 @@ int main() {
     }
 
     std::fs::path logPath = "./output/";
-    if (std::fs::current_path().stem() == "build") {
+    if (std::fs::current_path().filename() == "build") {
         logPath = "../output/";
     }
 
-    HtmlTraceVisualizer visualizer{std::fs::path{logPath}.append("log.html")};
-    visualizer.visualize(Trace::getInstance());
+    HtmlTraceVisualizer{std::fs::path{logPath}.append("log.html")}
+        .visualize(Trace::getInstance());
 
     // DotTraceVisualizer{std::fs::path{logPath}.append("log.svg")}
     //     .visualize(Trace::getInstance());
