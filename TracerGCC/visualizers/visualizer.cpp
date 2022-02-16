@@ -12,6 +12,8 @@ OutputFile::OutputFile(const std::fs::path &path_, bool cumulative_) :
 
 void OutputFile::open() {
     file.open(path, file.out | (cumulative ? file.app : file.trunc));
+
+    REQUIRE(!file.bad());
 }
 
 void OutputFile::close() {
