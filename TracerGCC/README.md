@@ -21,6 +21,11 @@ the `DECL_TVAR(T, NAME, [VALUE])` macro, or just by creating a
 variable's name). To add function (scope) information, use the `FUNC_GUARD` macro, or just instantiate a `TraceFuncGuard` inside the
 scope.
 
+Some control over the tracer's implementation is provided via several preprocessor macros:
+ - `TRACER_COPY_IN_ARGS` switches between two alternative implementations for operators
+   that have to produce a new `Tracer` instance as a result;
+ - `TRACER_RVALUE_REFS` enables move-contructors for `Tracer`s.
+
 The results are being accumulated in the global `Trace` instance, available via `Trace::getInstance()`. To represent them nicely, you may use on of the visualizers in `./visualizers` - currently, dot (GraphViz) and HTML are available. You may see examples of their usage and results below.
 
 ## Examples
