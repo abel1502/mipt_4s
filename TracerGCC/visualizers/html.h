@@ -64,7 +64,10 @@ protected:
     std::vector<HtmlTag> tagStack{};
     unsigned recursionDepth = 0;
     helpers::CounterMap<const void *, unsigned> ptrCells{};
-    helpers::FlagMap created{};
+    struct {
+        unsigned copies = 0;
+        unsigned moves = 0;
+    } stats{};
 
 
     void beginLog();
@@ -88,9 +91,7 @@ protected:
     void logEntry(const TraceEntry &entry);
     void logVarInfo(const TraceEntry::VarInfo &info);
     void logIndent();
-
-    inline void onVarCreated(unsigned idx);
-    inline bool wasVarCreated(unsigned idx) const;
+    void logDbgMsg(const std::string_view &msg);
 
 };
 
@@ -111,12 +112,4 @@ inline void HtmlTraceVisualizer::closeTag(const char *tag) {
 
 inline void HtmlTraceVisualizer::closeTag() {
     popTag().writeClose(ofile);
-}
-
-inline void HtmlTraceVisualizer::onVarCreated(unsigned idx) {
-    created.set(idx);
-}
-
-inline bool HtmlTraceVisualizer::wasVarCreated(unsigned idx) const {
-    return created.get(idx);
 }

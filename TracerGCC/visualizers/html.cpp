@@ -1,5 +1,6 @@
 #include "html.h"
 #include <cstdarg>
+#include <sstream>
 
 
 #pragma region HtmlTag
@@ -69,6 +70,8 @@ void HtmlTag::WriteProxy::writeEnd() const {
 
 #pragma region HtmlTraceVisualizer
 void HtmlTraceVisualizer::visualize(const Trace &trace) {
+    stats = {};
+
     beginLog();
 
     for (const auto &entry : trace.getEntries()) {
@@ -102,8 +105,18 @@ void HtmlTraceVisualizer::beginLog() {
 }
 
 void HtmlTraceVisualizer::endLog() {
-    if (tagStack.size() != 2) {
-        DBG("Warning: abnormal termination");
+    if (tagStack.size() == 2) {
+        std::ostringstream buf{};
+        buf << "Total copies: " << stats.copies;
+        logDbgMsg(buf.view());
+
+        buf.str(""); buf.clear();
+        buf << "Total moves:  " << stats.moves;
+        logDbgMsg(buf.view());
+
+        stats = {};
+    } else {
+        logDbgMsg("Warning: abnormal termination");
     }
     
     while (!tagStack.empty()) {
@@ -150,7 +163,8 @@ void HtmlTraceVisualizer::dumpStyle() {
         "    font-weight: bold;\n"
         "}\n"
         ".label-move {\n"
-        "    color: #00F000;\n"
+        // "    color: #00F000;\n"
+        "    color: #E0E000;\n"
         "    font-weight: bold;\n"
         "}\n"
         ".label-bin {\n"
@@ -244,16 +258,7 @@ void HtmlTraceVisualizer::logEntry(const TraceEntry &entry) {
     } break;
 
     case TracedOp::DbgMsg: {
-        logIndent();
-
-        openTag("span").arg("class", "dbg-msg");
-        ofile.write("[dbg] ");
-        openTag("i");
-        ofile.write(entry.opStr);
-        closeTag();
-        closeTag();
-
-        ofile.writeln();
+        logDbgMsg(entry.opStr);
     } break;
 
     case TracedOp::Ctor: {
@@ -269,8 +274,6 @@ void HtmlTraceVisualizer::logEntry(const TraceEntry &entry) {
         logVarInfo(entry.inst);
 
         ofile.writeln();
-
-        onVarCreated(entry.inst.idx);
     } break;
 
     case TracedOp::Dtor: {
@@ -292,8 +295,14 @@ void HtmlTraceVisualizer::logEntry(const TraceEntry &entry) {
     case TracedOp::Move: {
         logIndent();
 
-        bool isCtor = !wasVarCreated(entry.inst.idx);
+        bool isCtor = !std::string_view(entry.opStr).ends_with('=');
         bool isCopy = entry.op == TracedOp::Copy;
+
+        if (isCopy) {
+            ++stats.copies;
+        } else {
+            ++stats.moves;
+        }
 
         {
             auto tmp = openTag("span");
@@ -321,8 +330,6 @@ void HtmlTraceVisualizer::logEntry(const TraceEntry &entry) {
         logVarInfo(entry.other);
 
         ofile.writeln();
-
-        onVarCreated(entry.inst.idx);
     } break;
 
     case TracedOp::Inplace:
@@ -389,6 +396,19 @@ void HtmlTraceVisualizer::logVarInfo(const TraceEntry::VarInfo &info) {
 
 void HtmlTraceVisualizer::logIndent() {
     ofile.indent(getIndent());
+}
+
+void HtmlTraceVisualizer::logDbgMsg(const std::string_view &msg) {
+    logIndent();
+
+    openTag("span").arg("class", "dbg-msg");
+    ofile.write("[dbg] ");
+    openTag("i");
+    ofile.write(msg);
+    closeTag();
+    closeTag();
+
+    ofile.writeln();
 }
 
 
