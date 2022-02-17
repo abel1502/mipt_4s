@@ -161,7 +161,7 @@ void DotTraceVisualizer::visualize(const Trace &trace) {
 }
 
 DotTraceVisualizer::~DotTraceVisualizer() {
-    // TODO: Maybe, conditionally endLog();
+    // TODO: Maybe conditionally endLog();
 }
 
 void DotTraceVisualizer::beginLog() {

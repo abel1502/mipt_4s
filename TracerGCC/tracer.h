@@ -7,7 +7,7 @@
 
 
 // Uncomment to include move-semantics-related operations
-// #define TRACER_RVALUE_REFS
+#define TRACER_RVALUE_REFS
 
 // Uncomment to copy the results inside arguments for binary and unary operators
 // #define TRACER_COPY_IN_ARGS
@@ -51,7 +51,7 @@ template <typename T>
 class Tracer {
 public:
     // TODO: Move to VarInfo?
-    static constexpr const char DEFAULT_VAR_NAME[] = "<i>&lt;?&gt;</i>";
+    static constexpr const char DEFAULT_VAR_NAME[] = "<i>&lt;tmp&gt;</i>";
 
 
     using underlying_t = T;

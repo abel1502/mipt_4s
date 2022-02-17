@@ -107,8 +107,10 @@ int main() {
     HtmlTraceVisualizer{std::fs::path{logPath}.append("log.html")}
         .visualize(Trace::getInstance());
 
-    // DotTraceVisualizer{std::fs::path{logPath}.append("log.svg")}
-    //     .visualize(Trace::getInstance());
+    #if 0
+    DotTraceVisualizer{std::fs::path{logPath}.append("log.svg")}
+        .visualize(Trace::getInstance());
+    #endif
 
     return 0;
 }
