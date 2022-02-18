@@ -374,7 +374,12 @@ void HtmlTraceVisualizer::logEntry(const TraceEntry &entry) {
 
 void HtmlTraceVisualizer::logVarInfo(const TraceEntry::VarInfo &info) {
     // TODO: Handle default name specially
-    ofile.write(info.name);
+    if (info.name == std::string_view(info.DEFAULT_VAR_NAME)) {
+        ofile.writef(info.name, info.idx);
+    } else {
+        ofile.write(info.name);
+    }
+
     openTag("span").arg("class", "var-info");
 
     // ofile.writef("(#%u)[%p:%u](val=%s)", info.idx, info.addr, ptrCells.get(info.addr), info.valRepr.c_str());

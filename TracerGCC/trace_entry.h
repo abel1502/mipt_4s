@@ -20,6 +20,9 @@ enum class TracedOp {
 
 struct TraceEntry {
     struct VarInfo {
+        static constexpr const char DEFAULT_VAR_NAME[] = "<i>&lt;tmp_%u&gt;</i>";
+
+
         const void *addr = nullptr;
         unsigned idx = -1u;
         const char *name{};

@@ -50,10 +50,6 @@ void addToTrace(TracedOp op, const TraceEntry::VarInfo &inst,
 template <typename T>
 class Tracer {
 public:
-    // TODO: Move to VarInfo?
-    static constexpr const char DEFAULT_VAR_NAME[] = "<i>&lt;tmp&gt;</i>";
-
-
     using underlying_t = T;
 
 
@@ -84,7 +80,7 @@ public:
     #pragma endregion Getters
 
     #pragma region Ctor,Dtor
-    Tracer(const T &value_ = T{}, const char *name_ = DEFAULT_VAR_NAME) :
+    Tracer(const T &value_ = T{}, const char *name_ = TraceEntry::VarInfo::DEFAULT_VAR_NAME) :
         value{value_}, name{name_} {
 
         onOperation(TracedOp::Ctor, this, nullptr, "");
@@ -99,7 +95,7 @@ public:
     Tracer(const Tracer &other) :
         value{other.value},
         lastValue{other.lastValue},
-        name{DEFAULT_VAR_NAME} {
+        name{TraceEntry::VarInfo::DEFAULT_VAR_NAME} {
 
         onOperation(TracedOp::Copy, this, &other, "cp");
     }
@@ -117,7 +113,7 @@ public:
     Tracer(Tracer &&other) :
         value{std::move(other.value)},
         lastValue{std::move(other.lastValue)},
-        name{DEFAULT_VAR_NAME} {
+        name{TraceEntry::VarInfo::DEFAULT_VAR_NAME} {
 
         onOperation(TracedOp::Move, this, &other, "mv");
     }
