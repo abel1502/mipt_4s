@@ -3,6 +3,7 @@
 #include <type_traits>
 #include <concepts>
 #include <string_view>
+#include <set>
 
 
 namespace abel {
@@ -155,22 +156,51 @@ constexpr unsigned named_args_count_v = named_args_helper<As...>::count;
 #pragma endregion named_args_helper
 
 #pragma region get_named_arg
-template <typename T>
+template <typename T, bool Validate = false>
 [[noreturn]] named_arg<T> &&get_arg(const std::string_view &name) {
     throw arg_error("Argument not found");
 }
 
-template <typename T, typename A, typename ... As>
+template <typename T, bool Validate = false, typename A, typename ... As>
 named_arg<T> &&get_arg(const std::string_view &name, A &&arg, As &&... args) {
     if constexpr (is_compatible_named_arg_v<T, A>) {
         if (arg.name == name) {
+            #pragma region validation
+            if constexpr (Validate) {
+                bool duplicates = false;
+
+                try {
+                    get_arg<T, false>(name, std::forward<As>(args)...);
+                    duplicates = true;
+                } catch (const arg_error &e) {}
+
+                if (duplicates) {
+                    throw arg_error("Duplicate argument");
+                }
+            }
+            #pragma endregion validation
+
             return std::forward<A>(arg);
         }
     }
 
-    return get_arg<T>(name, std::forward<As>(args)...);
+    return get_arg<T, Validate>(name, std::forward<As>(args)...);
 }
 #pragma endregion get_named_arg
+
+#pragma region visit_named_args
+template <typename Visitor, typename ... As>
+concept args_visitor = requires(Visitor &&visitor, As &&... args) {
+    (visitor.visit(args), ...);
+};
+
+template <typename Visitor, typename ... As>
+requires args_visitor<Visitor, As...>
+void visit_named_args(Visitor &&visitor, As &&... args) {
+    (visitor.visit(args), ...);
+}
+#pragma endregion visit_named_args
+
 
 #ifdef __INTELLISENSE__
 #pragma diag_default 864
