@@ -42,6 +42,10 @@ struct TraceEntry {
         static inline VarInfo empty() {
             return VarInfo{};
         }
+
+        inline bool isUnnamed() const {
+            return name == std::string_view(DEFAULT_VAR_NAME);
+        }
     };
 
     struct FuncInfo {

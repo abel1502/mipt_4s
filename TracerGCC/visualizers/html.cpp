@@ -374,7 +374,7 @@ void HtmlTraceVisualizer::logEntry(const TraceEntry &entry) {
 
 void HtmlTraceVisualizer::logVarInfo(const TraceEntry::VarInfo &info) {
     // TODO: Handle default name specially
-    if (info.name == std::string_view(info.DEFAULT_VAR_NAME)) {
+    if (info.isUnnamed()) {
         ofile.writef(info.name, info.idx);
     } else {
         ofile.write(info.name);
