@@ -172,6 +172,8 @@ void DotTraceVisualizer::beginLog() {
 
     // TODO: A header
     dot.writeNode("info")
+        .arg("fontname", "Times")
+        .arg("shape", "box")
         .labelt(std::fs::current_path().append("../tpl/label_info.tpl"), true);
 }
 
