@@ -8,6 +8,7 @@
 #include <cstdlib>
 #include <utility>
 #include <cassert>
+#include <cstddef>
 
 // These includes are 'implementation-defined', and may get removed in the future.
 // If you need them, include them manually in your code
