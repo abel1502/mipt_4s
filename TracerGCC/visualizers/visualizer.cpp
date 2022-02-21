@@ -1,6 +1,7 @@
 #include "visualizer.h"
 #include <cstdio>
 #include <cstdarg>
+#include "../helpers.h"
 
 
 #pragma region OutputFile
@@ -37,48 +38,17 @@ void OutputFile::writef(const char *fmt, ...) {
 }
 
 void OutputFile::writefv(const char *fmt, va_list args) {
-    va_list args2{};
-
-    va_copy(args2, args);
-    int reqSize = vsnprintf(nullptr, 0, fmt, args2);
-    va_end(args2);
-
-    assert(reqSize >= 0);
-    
-    std::string result{};
-    result.resize(reqSize + 1);
-
-    int writtenSize = vsnprintf(result.data(), reqSize + 1, fmt, args);
-
-    assert(writtenSize > 0 && writtenSize <= reqSize);
-
-    result.resize(writtenSize);
-
-    write(result);
+    write(helpers::vsprintfxx(fmt, args));
 }
 
 void OutputFile::writefa(unsigned alignment, const char *fmt, ...) {
     va_list args{};
-
     va_start(args, fmt);
-    int reqSize = vsnprintf(nullptr, 0, fmt, args);
+    std::string result = helpers::vsprintfxx(fmt, args);
     va_end(args);
-
-    assert(reqSize >= 0);
-    
-    std::string result{};
-    result.resize(reqSize + 1);
-
-    va_start(args, fmt);
-    int writtenSize = vsnprintf(result.data(), reqSize + 1, fmt, args);
-    va_end(args);
-
-    assert(writtenSize > 0 && writtenSize <= reqSize);
-
-    result.resize(writtenSize);
 
     write(result);
-    for (; (unsigned)writtenSize < alignment; ++writtenSize) {
+    for (unsigned writtenSize = result.size(); writtenSize < alignment; ++writtenSize) {
         write(' ');
     }
 }
