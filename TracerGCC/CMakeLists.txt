@@ -25,6 +25,10 @@ add_executable(
     trace_entry.cpp
     trace.cpp
     tracer.cpp
+    helpers.cpp
+
+    # named_arg.cpp
+    # format.cpp
 
     visualizers/visualizer.cpp
     visualizers/dot.cpp
