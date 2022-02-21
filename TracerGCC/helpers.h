@@ -3,6 +3,7 @@
 #include <vector>
 #include <map>
 #include <type_traits>
+#include <cstdarg>
 
 
 
@@ -73,6 +74,18 @@ protected:
     }
 
 };
+
+
+std::string vsprintfxx(const char *fmt, va_list args);
+
+inline std::string sprintfxx(const char *fmt, ...) {
+    va_list args{};
+    va_start(args, fmt);
+    std::string result = vsprintfxx(fmt, args);
+    va_end(args);
+
+    return result;
+}
 
 
 }
