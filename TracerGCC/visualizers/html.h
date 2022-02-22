@@ -27,6 +27,13 @@ protected:
 
     class WriteProxy {
     public:
+        WriteProxy(const WriteProxy &other) = delete;
+        WriteProxy &operator=(const WriteProxy &other) = delete;
+
+        WriteProxy(WriteProxy &&other);
+        WriteProxy &operator=(WriteProxy &&other) = delete;
+
+
         WriteProxy &arg(const char *name, const std::string_view &value);
 
         WriteProxy &arg(const char *name);
@@ -38,6 +45,7 @@ protected:
     protected:
         OutputFile &ofile;
         bool isInline = false;
+        bool disabled = false;
 
 
         WriteProxy(OutputFile &ofile_, bool isInline_ = false);

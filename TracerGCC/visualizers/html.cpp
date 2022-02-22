@@ -29,10 +29,20 @@ HtmlTag::WriteProxy::WriteProxy(OutputFile &ofile_, bool isInline_) :
     ofile{ofile_}, isInline{isInline_} {}
 
 HtmlTag::WriteProxy::~WriteProxy() {
-    writeEnd();
+    if (!disabled) {
+        writeEnd();
+    }
+}
+
+HtmlTag::WriteProxy::WriteProxy(WriteProxy &&other) :
+    ofile{other.ofile}, isInline{other.isInline} {
+    
+    other.disabled = true;
 }
 
 HtmlTag::WriteProxy &HtmlTag::WriteProxy::arg(const char *name, const std::string_view &value) {
+    assert(!disabled);
+
     ofile.write(" ");
     ofile.write(name);
     ofile.write("=\"");
@@ -43,6 +53,8 @@ HtmlTag::WriteProxy &HtmlTag::WriteProxy::arg(const char *name, const std::strin
 }
 
 HtmlTag::WriteProxy &HtmlTag::WriteProxy::arg(const char *name) {
+    assert(!disabled);
+
     ofile.write(" ");
     ofile.write(name);
 
@@ -50,6 +62,8 @@ HtmlTag::WriteProxy &HtmlTag::WriteProxy::arg(const char *name) {
 }
 
 HtmlTag::WriteProxy &HtmlTag::WriteProxy::argf(const char *name, const char *fmt, ...) {
+    assert(!disabled);
+
     ofile.write(" ");
     ofile.write(name);
     ofile.write("=\"");
@@ -63,6 +77,8 @@ HtmlTag::WriteProxy &HtmlTag::WriteProxy::argf(const char *name, const char *fmt
 }
 
 void HtmlTag::WriteProxy::writeEnd() const {
+    assert(!disabled);
+
     ofile.write(isInline ? "/>" : ">");
 }
 #pragma endregion HtmlTag
