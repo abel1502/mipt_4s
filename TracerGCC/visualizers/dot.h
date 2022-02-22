@@ -15,6 +15,9 @@ protected:
     class EdgeFmtWriteProxy;
     class HtmlLabelWriteProxy;
 
+
+    static constexpr bool DEFAULT_EDGE_CONSTRAINT = true;
+
 public:
     inline DotOutput(OutputFile &ofile_) :
         ofile{ofile_} {}
@@ -22,7 +25,7 @@ public:
     ArgsWriteProxy writeNode(const std::string_view &name);
     ArgsWriteProxy writefNode(const char *fmt, ...);
 
-    ArgsWriteProxy writeEdge(const std::string_view &from, const std::string_view &to, bool constraint = false);
+    ArgsWriteProxy writeEdge(const std::string_view &from, const std::string_view &to, bool constraint = DEFAULT_EDGE_CONSTRAINT);
     [[nodiscard]] EdgeFmtWriteProxy writefEdge(const char *fmtFrom, ...);
 
     void beginGraph(const char *type, const std::string_view &name, bool strict = false);
@@ -33,6 +36,8 @@ public:
     void writeArg(const char *name, const std::string_view &value);
 
     void writeArg(const char *name, const char *fmt, ...);
+
+    ArgsWriteProxy writeArgs();
 
     static std::string readTpl(const std::string_view &name);
 
@@ -110,7 +115,7 @@ protected:
 
     protected:
         OutputFile &ofile;
-        bool willConstraint = false;
+        bool willConstraint = DEFAULT_EDGE_CONSTRAINT;
         bool disabled = false;
 
 
@@ -130,10 +135,9 @@ protected:
         HtmlLabelWriteProxy(HtmlLabelWriteProxy &&other);
         HtmlLabelWriteProxy &operator=(HtmlLabelWriteProxy &&other) = delete;
 
-        ArgsWriteProxy finish();
+        ~HtmlLabelWriteProxy();
 
-        const HtmlTag &pushTag(const char *tag);
-        HtmlTag popTag();
+        ArgsWriteProxy finish();
 
         inline auto openTag(const char *tag);
         inline auto inlineTag(const char *tag);
@@ -150,6 +154,9 @@ protected:
         HtmlLabelWriteProxy(ArgsWriteProxy &&parent_, OutputFile &ofile_);
 
         void writeEnd();
+
+        inline const HtmlTag &pushTag(const char *tag);
+        inline HtmlTag popTag();
 
 
         friend DotOutput;
@@ -171,12 +178,20 @@ protected:
         unsigned lastChangeOpIdx = BAD_IDX;
         unsigned dtorOpIdx = BAD_IDX;
 
-        const void *lastAddr = nullptr;
+        // const void *lastAddr = nullptr;
 
         std::string expression{""};
 
 
         VarState() = default;
+
+        inline bool isCreated() {
+            return ctorOpIdx != BAD_IDX;
+        }
+
+        inline bool isDead() {
+            return dtorOpIdx != BAD_IDX;
+        }
     };
 
     class Vars {
@@ -240,6 +255,7 @@ protected:
     };
 
     static constexpr char NODE_FMT[] = "node_%u";
+    static constexpr char NODE_PORT_FMT[] = "node_%u:%s";
 
 
     void beginLog();
@@ -260,8 +276,61 @@ protected:
     static std::string_view getFuncColor(unsigned level);
 
     // This feels crotchy...
-    auto writeNode(unsigned entryIdx, bool box = false) -> decltype(dot.writeNode(""));
+    using _ArgsWriteProxy = decltype(dot.writeNode(""));
+    using _HtmlLabelWriteProxy = decltype(dot.writeNode("").labelh());
 
-    std::string buildVarInfo(const TraceEntry::VarInfo &info);
+    _ArgsWriteProxy writeNode(unsigned entryIdx, bool box = false);
+
+    void writeVarInfo(_HtmlLabelWriteProxy &html, const TraceEntry::VarInfo &info, const char *port = nullptr);
+
+    inline void writeNodeUnary(unsigned entryIdx, const char *name,
+                               const char *color, const TraceEntry::VarInfo &info) {
+        return _writeNodeAry(entryIdx, name, color, false, info, info);
+    }
+    
+    inline void writeNodeBinary(unsigned entryIdx, const char *name,
+                                const char *color, const TraceEntry::VarInfo &infoInst,
+                                const TraceEntry::VarInfo &infoOther) {
+        return _writeNodeAry(entryIdx, name, color, true, infoInst, infoOther);
+    }
+
+    void _writeNodeAry(unsigned entryIdx, const char *name,
+                       const char *color, bool binary,
+                       const TraceEntry::VarInfo &infoInst,
+                       const TraceEntry::VarInfo &infoOther);
+    
+    _ArgsWriteProxy writeEdge(unsigned idxFrom, unsigned idxTo);
+    _ArgsWriteProxy writeEdge(unsigned idxFrom, unsigned idxTo,
+                              const char *portFrom, const char *portTo);
 
 };
+
+inline auto DotOutput::HtmlLabelWriteProxy::openTag(const char *tag) {
+    return pushTag(tag).writeOpen(ofile);
+}
+
+inline auto DotOutput::HtmlLabelWriteProxy::inlineTag(const char *tag) {
+    return pushTag(tag).writeInline(ofile);
+}
+
+inline void DotOutput::HtmlLabelWriteProxy::closeTag(const char *tag) {
+    REQUIRE(tagStack.back().getTag() == std::string_view{tag});
+
+    closeTag();
+}
+
+inline void DotOutput::HtmlLabelWriteProxy::closeTag() {
+    popTag().writeClose(ofile);
+}
+
+inline const HtmlTag &DotOutput::HtmlLabelWriteProxy::pushTag(const char *tag) {
+    return tagStack.emplace_back(tag);
+}
+
+inline HtmlTag DotOutput::HtmlLabelWriteProxy::popTag() {
+    HtmlTag result = tagStack.back();
+
+    tagStack.pop_back();
+
+    return result;
+}

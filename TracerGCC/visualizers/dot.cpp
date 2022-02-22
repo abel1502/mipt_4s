@@ -72,16 +72,20 @@ DotOutput::ArgsWriteProxy DotOutput::writeDefaultArgs(const char *type) {
 }
 
 void DotOutput::writeArg(const char *name, const std::string_view &value) {
-    ArgsWriteProxy{ofile, false}.arg(name, value);
+    writeArgs().arg(name, value);
     ofile.write("\n");
 }
 
 void DotOutput::writeArg(const char *name, const char *fmt, ...) {
     va_list args{};
     va_start(args, fmt);
-    ArgsWriteProxy{ofile, false}.argfv(name, fmt, args);
+    writeArgs().argfv(name, fmt, args);
     va_end(args);
     ofile.write("\n");
+}
+
+DotOutput::ArgsWriteProxy DotOutput::writeArgs() {
+    return ArgsWriteProxy{ofile, false};
 }
 
 std::string DotOutput::readTpl(const std::string_view &name) {
@@ -166,6 +170,12 @@ DotOutput::ArgsWriteProxy &DotOutput::ArgsWriteProxy::argfv(const char *name, co
 
     return *this;
 }
+
+DotOutput::HtmlLabelWriteProxy DotOutput::ArgsWriteProxy::labelh() {
+    ofile.write("label=");
+
+    return HtmlLabelWriteProxy{std::move(*this), ofile};
+}
 #pragma endregion ArgsWriteProxy
 
 #pragma region EdgeFmtWriteProxy
@@ -202,7 +212,45 @@ void DotOutput::EdgeFmtWriteProxy::writeEnd() const {}
 #pragma endregion EdgeFmtWriteProxy
 
 #pragma region HtmlLabelWriteProxy
-// TODO
+DotOutput::HtmlLabelWriteProxy::HtmlLabelWriteProxy(HtmlLabelWriteProxy &&other) :
+    parent{std::move(other.parent)}, ofile{other.ofile},
+    tagStack{std::move(other.tagStack)} {
+    
+    other.disabled = true;
+}
+
+DotOutput::HtmlLabelWriteProxy::~HtmlLabelWriteProxy() {
+    if (!disabled) {
+        writeEnd();
+    }
+}
+
+DotOutput::ArgsWriteProxy DotOutput::HtmlLabelWriteProxy::finish() {
+    assert(!disabled);
+
+    writeEnd();
+    disabled = true;
+
+    return std::move(parent);
+}
+
+DotOutput::HtmlLabelWriteProxy::HtmlLabelWriteProxy(ArgsWriteProxy &&parent_,
+                                                    OutputFile &ofile_) :
+    parent{std::move(parent_)}, ofile{ofile_} {
+
+    assert(!disabled);
+    ofile.write("<");
+}
+
+void DotOutput::HtmlLabelWriteProxy::writeEnd() {
+    assert(!disabled);
+
+    while (!tagStack.empty()) {
+        closeTag();
+    }
+
+    ofile.write(">; ");
+}
 #pragma endregion HtmlLabelWriteProxy
 
 #pragma endregion DotOutput
@@ -244,6 +292,12 @@ void DotTraceVisualizer::beginLog() {
 
     dot.writeArg("rankdir", "TB");
     dot.writeArg("newrank", "true");
+    dot.writeArg("splines", "ortho");
+    // dot.writeArg("margin", "10");
+    // dot.writeArg("concentrate", "true");
+    // dot.writeArg("esep", "10");
+    // dot.writeArg("overlap", "scalexy");
+    // dot.writeArg("K", "3");
 
     dumpLegend();
     // Intentionally missing, due to it needing the summary data that's only available in the end
@@ -333,7 +387,8 @@ void DotTraceVisualizer::dumpOrdering() {
 
         dot.writefEdge(NODE_FMT, lastNode).constraint().to(NODE_FMT, node)
             .arg("style", style::edge_timeline_style)
-            .arg("color", style::edge_timeline_color);
+            .arg("color", style::edge_timeline_color)
+            .arg("weight", "5");
 
         lastNode = node;
     }
@@ -341,14 +396,15 @@ void DotTraceVisualizer::dumpOrdering() {
 
 void DotTraceVisualizer::dumpPadding() {
     dot.beginGraph("", "");
+    //dot.writeArg("rank", "same");
     dot.writeDefaultArgs("node")
         .arg("style", "invis");
     dot.writeNode("pad_1");
     dot.writeNode("pad_2");
     dot.endGraph();
-    dot.writeEdge("pad_1", "pad_2")
+    dot.writeEdge("pad_1", "pad_2", true)
         .arg("style", "invis");
-    dot.writeEdge("pad_2", "node_0")
+    dot.writeEdge("pad_2", "node_0", true)
         .arg("style", "invis");
 }
 
@@ -363,7 +419,13 @@ void DotTraceVisualizer::logEntry(const Trace &trace, unsigned idx) {
 
         dot.writeArg("style", "filled");
         dot.writeArg("color", getFuncColor(entry.place.recursionDepth));
-        dot.writeArg("label", entry.place.func.function_name());
+        auto html = dot.writeArgs().labelh();
+        html.openTag("i");
+        html.openTag("b");
+        ofile.writef("%s()", entry.place.func.function_name());
+        html.closeTag();
+        html.closeTag();
+        html.finish();
         dot.writeArg("labeljust", "l");
 
         nodesPresent[idx] = false;
@@ -379,113 +441,90 @@ void DotTraceVisualizer::logEntry(const Trace &trace, unsigned idx) {
 
     case TracedOp::DbgMsg: {
         writeNode(idx, true)
-            .label("[dbg] <i>%s</i>", entry.opStr);
+            .label("[dbg] <i>%s</i>", entry.opStr)
+            .arg("style", "filled")
+            .arg("fillcolor", "#9850b0");
     } break;
 
     case TracedOp::Ctor: {
-        writeNode(idx)
-            .labelt("label_unary", "green", "ctor", buildVarInfo(entry.inst).c_str());
+        writeNodeUnary(idx, "<b>ctor</b>", "#40C040", entry.inst);
         
         vars.onCtor(idx, entry.inst);
     } break;
 
-    #if 0
     case TracedOp::Dtor: {
-        logIndent();
+        writeNodeUnary(idx, "<b>dtor</b>", "#C04040", entry.inst);
 
-        openTag("span")
-            .arg("class", "label label-dtor")
-            .argf("id", "label-dtor-%u", entry.inst.idx);
-        openTag("a").argf("href", "#label-ctor-%u", entry.inst.idx);
-        ofile.write("dtor");
-        closeTag();
-        closeTag();
-        logVarInfo(entry.inst);
-
-        ofile.writeln();
+        writeEdge(vars[entry.inst].ctorOpIdx, idx)
+            .arg("style", style::edge_lifespan_style)
+            .arg("color", style::edge_lifespan_color);
+        
+        vars.onDtor(idx, entry.inst);
     } break;
 
     case TracedOp::Copy:
     case TracedOp::Move: {
-        logIndent();
-
-        bool isCtor = !wasVarCreated(entry.inst.idx);
+        bool isCtor = !vars[entry.inst].isCreated();
         bool isCopy = entry.op == TracedOp::Copy;
 
-        {
-            auto tmp = openTag("span");
-            tmp.argf("class", "label label-%s", isCopy ? "copy" : "move");
-            if (isCtor) {
-                tmp.argf("id", "label-ctor-%u", entry.inst.idx);
-            }
+        writeNodeBinary(idx, helpers::sprintfxx("<b>%s</b>%s", isCopy ? "COPY" : "MOVE",
+                                                isCtor ? "" : "(=)").c_str(),
+                        isCopy ? "#F00000" : "#F0F000", entry.inst, entry.other);
+        
+        if (isCopy) {
+            ++stats.copies;
+        } else {
+            ++stats.moves;
         }
+
         if (isCtor) {
-            openTag("a").argf("href", "#label-dtor-%u", entry.inst.idx);
+            vars.onCtor(idx, entry.inst);
         }
-        ofile.write(isCopy ? "COPY" : "MOVE");
-        if (!isCtor) {
-            openTag("span").arg("class", "opstr");
-            ofile.write("(=)");
-            closeTag();
-        }
-        if (isCtor) {
-            closeTag("a");
-        }
-        closeTag();
+        vars.onUsed(idx, entry.other);
 
-        logVarInfo(entry.inst);
-        ofile.write(" from ");
-        logVarInfo(entry.other);
-
-        ofile.writeln();
-
-        onVarCreated(entry.inst.idx);
+        vars.onChanged(idx, entry.inst, entry.other, 
+                       [/*isCtor,*/ isCopy/*, &entry*/](std::string &expr, const std::string_view &otherExpr) {
+            expr = helpers::sprintfxx("%s(%s)", isCopy ? "cp" : "mv", otherExpr.data());
+        });
     } break;
 
     case TracedOp::Inplace:
-    case TracedOp::Binary:
-    case TracedOp::Cmp: {
-        logIndent();
-        
-        openTag("span").arg("class", "label label-bin");
-        ofile.write("bin");
-        openTag("span").arg("class", "opstr");
-        ofile.writef("(%s)", entry.opStr);
-        closeTag();
-        closeTag();
-        logVarInfo(entry.inst);
-        ofile.write(" with ");
-        logVarInfo(entry.other);
+    case TracedOp::Binary: {
+        writeNodeBinary(idx, helpers::sprintfxx("<b>bin</b>(%s)", entry.opStr).c_str(),
+                        "#6060C0", entry.inst, entry.other);
 
-        ofile.writeln();
+        vars.onChanged(idx, entry.inst, entry.other, [&entry](std::string &expr, const std::string_view &otherExpr) {
+            // TODO: This might react weird due to string_view. Should probably limit length. Also in the other ones as well
+            expr = helpers::sprintfxx("(%s %s %s)", expr.c_str(), entry.opStr, otherExpr.data());
+        });
+
+        vars.onUsed(idx, entry.other);
+    } break;
+
+    case TracedOp::Cmp: {
+        writeNodeBinary(idx, helpers::sprintfxx("<b>cmp</b>(%s)", helpers::htmlEncode(entry.opStr).c_str()).c_str(),
+                        "#6060C0", entry.inst, entry.other);
+
+        vars.onUsed(idx, entry.inst);
+        vars.onUsed(idx, entry.other);
     } break;
 
     case TracedOp::Unary: {
-        logIndent();
-        
-        openTag("span").arg("class", "label label-un");
-        openTag("span").arg("class", "opstr");
-        ofile.write("un");
-        closeTag();
-        closeTag();
-        const char *fmt = "(%s)";  // Prefix version
-        if (entry.other.isSet()) {  // Postfix version
-            fmt = "(%s.)";
-        }
-        ofile.writef(fmt, entry.opStr);
-        logVarInfo(entry.inst);
+        writeNodeUnary(idx, helpers::sprintfxx("<b>un</b>(%s)", entry.opStr).c_str(),
+                       "#6060C0", entry.inst);
 
-        ofile.writeln();
-    } break;
-    #endif
-
-    // TODO: Remove
-    default: {
-        writeNode(idx, true)
-            .label("Placeholder for op #%u", idx);
+        vars.onChanged(idx, entry.inst, [&entry](std::string &expr) {
+            if (entry.other.isSet()) {
+                // Postfix
+                expr = helpers::sprintfxx("(%s%s)", expr.c_str(), entry.opStr);
+            } else {
+                // Prefix
+                expr = helpers::sprintfxx("(%s%s)", entry.opStr, expr.c_str());
+            }
+        });
     } break;
 
-    // NODEFAULT
+    NODEFAULT
     }
 }
 
@@ -533,35 +572,108 @@ std::string_view DotTraceVisualizer::getFuncColor(unsigned level) {
     return COLORS[level];
 }
 
-auto DotTraceVisualizer::writeNode(unsigned entryIdx, bool box) -> decltype(dot.writeNode("")) {
+DotTraceVisualizer::_ArgsWriteProxy
+DotTraceVisualizer::writeNode(unsigned entryIdx, bool box) {
     return std::move(
         dot.writefNode(NODE_FMT, entryIdx)
             .arg("shape", box ? "box" : "plain")
+            .arg("fillcolor", "white")
+            .arg("style", "filled")
     );
 }
 
-std::string DotTraceVisualizer::buildVarInfo(const TraceEntry::VarInfo &info) {
-    #if 0
-        <tr>
-            <td align="left" border="1">%s</td> <!-- name -->
-            <td align="left" border="1">#%u</td> <!-- idx -->
-            <td align="left" border="1">%p:%u </td> <!-- ptr, ptrCell -->
-            <td align="left" border="1">=%s</td> <!-- value -->
-        </tr>
-        <tr>
-            <td align="left" colspan="4" border="1">%s</td> <!-- history -->
-        </tr>;
-    #endif
+void DotTraceVisualizer::writeVarInfo(_HtmlLabelWriteProxy &html, const TraceEntry::VarInfo &info, const char *port) {
+    html.openTag("tr");
+    {
+        auto td = [&html]() {
+            return std::move(
+                html.openTag("td")
+                    .arg("align", "left")
+                    .arg("border", "1")
+            );
+        };
 
-    std::string fmt = dot.readTpl("varinfo");
+        {
+            auto nameCell = td();
 
-    // Args: name, idx, ptr, ptrCell, value, history
-    std::string result = helpers::sprintfxx(fmt.c_str(),
-        info.name, info.idx, info.addr, ptrCells.get(info.addr),
-        info.valRepr.c_str(), vars[info].expression.c_str()
-    );
+            if (port) {
+                nameCell.arg("port", port);
+            }
+        }
+        if (info.isUnnamed()) {
+            ofile.writef(info.name, info.idx);
+        } else {
+            ofile.write(info.name);
+        }
+        html.closeTag();
 
-    return result;
+        td();
+        ofile.writef("#%u", info.idx);
+        html.closeTag();
+
+        td();
+        ofile.writef("%p:%u ", info.addr, ptrCells.get(info.addr));
+        html.closeTag();
+
+        td();
+        ofile.writef("=%s", info.valRepr.c_str());
+        html.closeTag();
+    }
+    html.closeTag();
+
+    html.openTag("tr");
+    html.openTag("td")
+        .arg("align", "left")
+        .arg("colspan", "4")
+        .arg("border", "1");
+    html.openTag("i");
+    ofile.write(vars[info].expression);
+    ofile.write(" ");  // Otherwise an empty expression is treated as a syntax error
+    html.closeTag();
+    html.closeTag();
+    html.closeTag();
+}
+
+void DotTraceVisualizer::_writeNodeAry(unsigned entryIdx, const char *name,
+                                       const char *color, bool binary,
+                                       const TraceEntry::VarInfo &infoInst,
+                                       const TraceEntry::VarInfo &infoOther) {
+    auto html = writeNode(entryIdx).labelh();
+
+    // border="0" cellpadding="2" cellspacing="0" cellborder="0"
+    html.openTag("table")
+        .arg("border", "0")
+        .arg("cellspacing", "0")
+        .arg("cellborder", "1");
+    html.openTag("tr");
+    html.openTag("td")
+        .arg("align", "left")
+        .arg("colspan", "4")
+        .arg("border", "1")
+        .arg("bgcolor", color);
+    ofile.writef("%s", name);
+    html.closeTag("td");
+    html.closeTag("tr");
+    writeVarInfo(html, infoInst, "inst");
+    if (binary) {
+        writeVarInfo(html, infoOther, "other");
+    }
+    html.closeTag("table");
+
+    auto node = html.finish();
+}
+
+DotTraceVisualizer::_ArgsWriteProxy
+DotTraceVisualizer::writeEdge(unsigned idxFrom, unsigned idxTo) {
+    return dot.writefEdge(NODE_FMT, idxFrom)
+                      .to(NODE_FMT, idxTo);
+}
+
+DotTraceVisualizer::_ArgsWriteProxy
+DotTraceVisualizer::writeEdge(unsigned idxFrom, unsigned idxTo,
+                              const char *portFrom, const char *portTo) {
+    return dot.writefEdge(NODE_PORT_FMT, idxFrom, portFrom)
+                      .to(NODE_PORT_FMT, idxTo, portTo);
 }
 
 #pragma region Vars
@@ -579,7 +691,7 @@ void DotTraceVisualizer::Vars::onCtor(unsigned opIdx, const TraceEntry::VarInfo 
     state.ctorOpIdx = opIdx;
     state.lastChangeOpIdx = opIdx;
     state.lastUseOpIdx = opIdx;
-    state.expression = info.name;
+    state.expression = info.buildNameStr();
     state.lastAddr = info.addr;
 }
 
@@ -625,6 +737,7 @@ void DotTraceVisualizer::Vars::onChanged(unsigned opIdx, const TraceEntry::VarIn
 
     operation(state.expression, stateOther.expression);
 }
+
 
 #pragma endregion Vars
 
