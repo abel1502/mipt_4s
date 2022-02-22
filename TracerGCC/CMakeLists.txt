@@ -7,7 +7,7 @@ set(CMAKE_CXX_COMPILER clang++)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_EXTENSIONS true)
 
-set(CXX_WARNING_FLAGS "-Wall -Wextra -Wno-multichar -Wno-unused-result")
+set(CXX_WARNING_FLAGS "-Wall -Wextra -Wno-multichar")
 set(CXX_OPTIMIZE_LEVEL 1)
 set(CXX_OPTIMIZE_0_FLAGS "-O0 -fno-elide-constructors -g")
 set(CXX_OPTIMIZE_1_FLAGS "-O1 -felide-constructors -g")
