@@ -1,7 +1,10 @@
 #include "helpers.h"
 
 
-std::string helpers::vsprintfxx(const char *fmt, va_list args) {
+namespace helpers {
+
+
+std::string vsprintfxx(const char *fmt, va_list args) {
     va_list args2{};
 
     va_copy(args2, args);
@@ -20,4 +23,26 @@ std::string helpers::vsprintfxx(const char *fmt, va_list args) {
     result.resize(writtenSize);
 
     return result;
+}
+
+
+std::string htmlEncode(const std::string_view &data) {
+    std::string result{};
+
+    result.reserve(data.size());
+    for (unsigned i = 0; i != data.size(); ++i) {
+        switch (data[i]) {
+            case '&' : result.append("&amp;");     break;
+            case '\"': result.append("&quot;");    break;
+            case '\'': result.append("&apos;");    break;
+            case '<' : result.append("&lt;");      break;
+            case '>' : result.append("&gt;");      break;
+            default  : result.append(&data[i], 1); break;
+        }
+    }
+    
+    return result;
+}
+
+
 }

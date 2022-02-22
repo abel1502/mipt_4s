@@ -88,4 +88,7 @@ inline std::string sprintfxx(const char *fmt, ...) {
 }
 
 
+std::string htmlEncode(const std::string_view &data);
+
+
 }
