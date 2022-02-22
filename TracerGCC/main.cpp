@@ -39,8 +39,9 @@ static void doMoreStuff(const std::vector<wrapper_t> &nums) {
     FUNC_GUARD;
 
     for (unsigned i = 1; i < nums.size(); ++i) {
-        if (nums[i - 1] > nums[i]) {
-            DBG("Bad result at %d", i);
+        if (nums[i - 1] < nums[i]) {
+            DBG("Array poorly sorted at pos %u!", i);
+            break;
         }
     }
 
@@ -61,6 +62,10 @@ static void doMaxsStuff() {
     DECL_TVAR(int, c, 0);
 
     c = a + b;
+
+    Trace().getInstance().addDbgMsg("Don't even know what else to show");
+    swap(a, b);
+    swap(b, c);
 }
 
 
