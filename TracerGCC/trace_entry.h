@@ -1,6 +1,7 @@
 #pragma once
 #include "general.h"
 #include "stdsl.h"
+#include "helpers.h"
 
 
 enum class TracedOp {
@@ -45,6 +46,14 @@ struct TraceEntry {
 
         inline bool isUnnamed() const {
             return name == std::string_view(DEFAULT_VAR_NAME);
+        }
+
+        inline std::string buildNameStr() const {
+            if (!isUnnamed()) {
+                return name;
+            }
+
+            return helpers::sprintfxx(name, idx);
         }
     };
 
