@@ -597,6 +597,8 @@ DotTraceVisualizer::writeNode(unsigned entryIdx, bool box) {
 }
 
 void DotTraceVisualizer::writeVarInfo(_HtmlLabelWriteProxy &html, const TraceEntry::VarInfo &info, const char *port) {
+    constexpr unsigned DETAIL_LEVEL = 2;
+
     html.openTag("tr");
     {
         auto td = [&html]() {
@@ -626,7 +628,11 @@ void DotTraceVisualizer::writeVarInfo(_HtmlLabelWriteProxy &html, const TraceEnt
         html.closeTag();
 
         td();
-        ofile.writef("%p:%u ", info.addr, ptrCells.get(info.addr));
+        if constexpr (DETAIL_LEVEL >= 1) {
+            ofile.writef("%p:%u ", info.addr, ptrCells.get(info.addr));
+        } else {
+            ofile.writef("[:%u] ", ptrCells.get(info.addr));
+        }
         html.closeTag();
 
         td();
@@ -635,17 +641,19 @@ void DotTraceVisualizer::writeVarInfo(_HtmlLabelWriteProxy &html, const TraceEnt
     }
     html.closeTag();
 
-    html.openTag("tr");
-    html.openTag("td")
-        .arg("align", "left")
-        .arg("colspan", "4")
-        .arg("border", "1");
-    html.openTag("i");
-    ofile.write(vars[info].expression);
-    ofile.write(" ");  // Otherwise an empty expression is treated as a syntax error
-    html.closeTag();
-    html.closeTag();
-    html.closeTag();
+    if constexpr (DETAIL_LEVEL >= 2) {
+        html.openTag("tr");
+        html.openTag("td")
+            .arg("align", "left")
+            .arg("colspan", "4")
+            .arg("border", "1");
+        html.openTag("i");
+        ofile.write(vars[info].expression);
+        ofile.write(" ");  // Otherwise an empty expression is treated as a syntax error
+        html.closeTag();
+        html.closeTag();
+        html.closeTag();
+    }
 }
 
 void DotTraceVisualizer::_writeNodeAry(unsigned entryIdx, const char *name,
