@@ -1,0 +1,109 @@
+<body class="main-body"><style>.main-body {
+    background-color: black;
+    color: white;
+    font-size: 18px;
+}
+
+.var-info {
+    font-size: 0.6em;
+}
+
+.func-info {
+    font-style: italic;
+}
+
+.dbg-msg {
+    color: #808080;
+}
+
+.label {
+    display: inline-block;
+    width: 10ch;
+}
+
+.label-ctor {
+    color: #40C040;
+}
+.label-dtor {
+    color: #C04040;
+}
+.label-copy {
+    color: #F00000;
+    font-weight: bold;
+}
+.label-move {
+    color: #E0E000;
+    font-weight: bold;
+}
+.label-bin {
+    color: #6060C0;
+}
+.label-un {
+    color: #6060C0;
+}
+
+.opstr {
+    color: white;
+    font-weight: normal;
+}
+
+.var-info-idx {
+    color: orange;
+}
+
+.var-info-cell {
+    color: #60e0f0;
+}
+
+@keyframes blink {
+    from {  }
+    50%  { background: #f0c000; }
+    to   {  }
+}
+
+.main-body .label a {
+    color: inherit;
+    text-decoration: none;
+}
+
+</style><script>window.addEventListener('load', (event) => {
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function (e) {
+            e.preventDefault();
+            
+            let target = document.querySelector(this.getAttribute('href'));
+            target.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            target.style.animation = 'none';
+            target.offsetHeight;  // Should trigger a reflow
+            target.style.animation = 'blink 1.5s ease 0.1s 1';
+        });
+    });
+});
+
+</script><pre><span class="dbg-msg">[dbg] <i>Varibale info format: name (#index)[address:ptr cell](val=value)</i></span>
+<span class="dbg-msg">[dbg] <i>For example: counter (#5)[0xffff0000:2](val=123)</i></span>
+<span class="func-info">main {
+</span>    <span class="label label-ctor" id="label-ctor-0"><a href="#label-dtor-0">ctor</a></span>a<span class="var-info">(<a class="var-info-idx" href="#label-ctor-0">#0</a>)[0x7ffe88a0e4d0:<span class="var-info-cell">0</span>](val=123)</span>
+    <span class="label label-ctor" id="label-ctor-1"><a href="#label-dtor-1">ctor</a></span>b<span class="var-info">(<a class="var-info-idx" href="#label-ctor-1">#1</a>)[0x7ffe88a0e4a8:<span class="var-info-cell">1</span>](val=456)</span>
+    <span class="label label-copy" id="label-ctor-2"><a href="#label-dtor-2">COPY</a></span><i>&lt;tmp_2&gt;</i><span class="var-info">(<a class="var-info-idx" href="#label-ctor-2">#2</a>)[0x7ffe88a0e4f8:<span class="var-info-cell">2</span>](val=0)</span> from a<span class="var-info">(<a class="var-info-idx" href="#label-ctor-0">#0</a>)[0x7ffe88a0e4d0:<span class="var-info-cell">0</span>](val=123)</span>
+    <span class="label label-bin">bin<span class="opstr">(+)</span></span><i>&lt;tmp_2&gt;</i><span class="var-info">(<a class="var-info-idx" href="#label-ctor-2">#2</a>)[0x7ffe88a0e4f8:<span class="var-info-cell">2</span>](val=123)</span> with b<span class="var-info">(<a class="var-info-idx" href="#label-ctor-1">#1</a>)[0x7ffe88a0e4a8:<span class="var-info-cell">1</span>](val=456)</span>
+    <span class="label label-dtor" id="label-dtor-2"><a href="#label-ctor-2">dtor</a></span><i>&lt;tmp_2&gt;</i><span class="var-info">(<a class="var-info-idx" href="#label-ctor-2">#2</a>)[0x7ffe88a0e4f8:<span class="var-info-cell">2</span>](val=579)</span>
+    <span class="dbg-msg">[dbg] <i>Max's stuff</i></span>
+    <span class="func-info">doMaxsStuff {
+</span>        <span class="label label-ctor" id="label-ctor-3"><a href="#label-dtor-3">ctor</a></span>a<span class="var-info">(<a class="var-info-idx" href="#label-ctor-3">#3</a>)[0x7ffe88a0e458:<span class="var-info-cell">3</span>](val=99)</span>
+        <span class="label label-ctor" id="label-ctor-4"><a href="#label-dtor-4">ctor</a></span>b<span class="var-info">(<a class="var-info-idx" href="#label-ctor-4">#4</a>)[0x7ffe88a0e440:<span class="var-info-cell">4</span>](val=3)</span>
+        <span class="label label-ctor" id="label-ctor-5"><a href="#label-dtor-5">ctor</a></span>c<span class="var-info">(<a class="var-info-idx" href="#label-ctor-5">#5</a>)[0x7ffe88a0e428:<span class="var-info-cell">5</span>](val=0)</span>
+        <span class="label label-copy" id="label-ctor-6"><a href="#label-dtor-6">COPY</a></span><i>&lt;tmp_6&gt;</i><span class="var-info">(<a class="var-info-idx" href="#label-ctor-6">#6</a>)[0x7ffe88a0e410:<span class="var-info-cell">6</span>](val=0)</span> from a<span class="var-info">(<a class="var-info-idx" href="#label-ctor-3">#3</a>)[0x7ffe88a0e458:<span class="var-info-cell">3</span>](val=99)</span>
+        <span class="label label-bin">bin<span class="opstr">(+)</span></span><i>&lt;tmp_6&gt;</i><span class="var-info">(<a class="var-info-idx" href="#label-ctor-6">#6</a>)[0x7ffe88a0e410:<span class="var-info-cell">6</span>](val=99)</span> with b<span class="var-info">(<a class="var-info-idx" href="#label-ctor-4">#4</a>)[0x7ffe88a0e440:<span class="var-info-cell">4</span>](val=3)</span>
+        <span class="label label-move">MOVE<span class="opstr">(=)</span></span>c<span class="var-info">(<a class="var-info-idx" href="#label-ctor-5">#5</a>)[0x7ffe88a0e428:<span class="var-info-cell">5</span>](val=0)</span> from <i>&lt;tmp_6&gt;</i><span class="var-info">(<a class="var-info-idx" href="#label-ctor-6">#6</a>)[0x7ffe88a0e410:<span class="var-info-cell">6</span>](val=0)</span>
+        <span class="label label-dtor" id="label-dtor-6"><a href="#label-ctor-6">dtor</a></span><i>&lt;tmp_6&gt;</i><span class="var-info">(<a class="var-info-idx" href="#label-ctor-6">#6</a>)[0x7ffe88a0e410:<span class="var-info-cell">6</span>](val=0)</span>
+        <span class="label label-dtor" id="label-dtor-5"><a href="#label-ctor-5">dtor</a></span>c<span class="var-info">(<a class="var-info-idx" href="#label-ctor-5">#5</a>)[0x7ffe88a0e428:<span class="var-info-cell">5</span>](val=102)</span>
+        <span class="label label-dtor" id="label-dtor-4"><a href="#label-ctor-4">dtor</a></span>b<span class="var-info">(<a class="var-info-idx" href="#label-ctor-4">#4</a>)[0x7ffe88a0e440:<span class="var-info-cell">4</span>](val=3)</span>
+        <span class="label label-dtor" id="label-dtor-3"><a href="#label-ctor-3">dtor</a></span>a<span class="var-info">(<a class="var-info-idx" href="#label-ctor-3">#3</a>)[0x7ffe88a0e458:<span class="var-info-cell">3</span>](val=99)</span>
+    <span class="func-info">}
+</span>    <span class="label label-dtor" id="label-dtor-1"><a href="#label-ctor-1">dtor</a></span>b<span class="var-info">(<a class="var-info-idx" href="#label-ctor-1">#1</a>)[0x7ffe88a0e4a8:<span class="var-info-cell">1</span>](val=456)</span>
+    <span class="label label-dtor" id="label-dtor-0"><a href="#label-ctor-0">dtor</a></span>a<span class="var-info">(<a class="var-info-idx" href="#label-ctor-0">#0</a>)[0x7ffe88a0e4d0:<span class="var-info-cell">0</span>](val=123)</span>
+<span class="func-info">}
+</span><span class="dbg-msg">[dbg] <i>Total copies: 2</i></span>
+<span class="dbg-msg">[dbg] <i>Total moves:  1</i></span>
+</pre></body>

@@ -1,0 +1,178 @@
+<body class="main-body"><style>.main-body {
+    background-color: black;
+    color: white;
+    font-size: 18px;
+}
+
+.var-info {
+    font-size: 0.6em;
+}
+
+.func-info {
+    font-style: italic;
+}
+
+.dbg-msg {
+    color: #808080;
+}
+
+.label {
+    display: inline-block;
+    width: 10ch;
+}
+
+.label-ctor {
+    color: #40C040;
+}
+.label-dtor {
+    color: #C04040;
+}
+.label-copy {
+    color: #F00000;
+    font-weight: bold;
+}
+.label-move {
+    color: #E0E000;
+    font-weight: bold;
+}
+.label-bin {
+    color: #6060C0;
+}
+.label-un {
+    color: #6060C0;
+}
+
+.opstr {
+    color: white;
+    font-weight: normal;
+}
+
+.var-info-idx {
+    color: orange;
+}
+
+.var-info-cell {
+    color: #60e0f0;
+}
+
+@keyframes blink {
+    from {  }
+    50%  { background: #f0c000; }
+    to   {  }
+}
+
+.main-body .label a {
+    color: inherit;
+    text-decoration: none;
+}
+
+</style><script>window.addEventListener('load', (event) => {
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function (e) {
+            e.preventDefault();
+            
+            let target = document.querySelector(this.getAttribute('href'));
+            target.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            target.style.animation = 'none';
+            target.offsetHeight;  // Should trigger a reflow
+            target.style.animation = 'blink 1.5s ease 0.1s 1';
+        });
+    });
+});
+
+</script><pre><span class="dbg-msg">[dbg] <i>Varibale info format: name (#index)[address:ptr cell](val=value)</i></span>
+<span class="dbg-msg">[dbg] <i>For example: counter (#5)[0xffff0000:2](val=123)</i></span>
+<span class="func-info">main {
+</span>    <span class="dbg-msg">[dbg] <i>Bubble sort preparations</i></span>
+    <span class="label label-ctor" id="label-ctor-0"><a href="#label-dtor-0">ctor</a></span>cur<span class="var-info">(<a class="var-info-idx" href="#label-ctor-0">#0</a>)[0x7ffeb3d2b568:<span class="var-info-cell">0</span>](val=35)</span>
+    <span class="label label-copy" id="label-ctor-1"><a href="#label-dtor-1">COPY</a></span><i>&lt;tmp_1&gt;</i><span class="var-info">(<a class="var-info-idx" href="#label-ctor-1">#1</a>)[0x1245340:<span class="var-info-cell">1</span>](val=0)</span> from cur<span class="var-info">(<a class="var-info-idx" href="#label-ctor-0">#0</a>)[0x7ffeb3d2b568:<span class="var-info-cell">0</span>](val=35)</span>
+    <span class="label label-dtor" id="label-dtor-0"><a href="#label-ctor-0">dtor</a></span>cur<span class="var-info">(<a class="var-info-idx" href="#label-ctor-0">#0</a>)[0x7ffeb3d2b568:<span class="var-info-cell">0</span>](val=35)</span>
+    <span class="label label-ctor" id="label-ctor-2"><a href="#label-dtor-2">ctor</a></span>cur<span class="var-info">(<a class="var-info-idx" href="#label-ctor-2">#2</a>)[0x7ffeb3d2b568:<span class="var-info-cell">0</span>](val=79)</span>
+    <span class="label label-copy" id="label-ctor-3"><a href="#label-dtor-3">COPY</a></span><i>&lt;tmp_3&gt;</i><span class="var-info">(<a class="var-info-idx" href="#label-ctor-3">#3</a>)[0x1245888:<span class="var-info-cell">2</span>](val=0)</span> from cur<span class="var-info">(<a class="var-info-idx" href="#label-ctor-2">#2</a>)[0x7ffeb3d2b568:<span class="var-info-cell">0</span>](val=79)</span>
+    <span class="label label-copy" id="label-ctor-4"><a href="#label-dtor-4">COPY</a></span><i>&lt;tmp_4&gt;</i><span class="var-info">(<a class="var-info-idx" href="#label-ctor-4">#4</a>)[0x1245870:<span class="var-info-cell">3</span>](val=0)</span> from <i>&lt;tmp_1&gt;</i><span class="var-info">(<a class="var-info-idx" href="#label-ctor-1">#1</a>)[0x1245340:<span class="var-info-cell">1</span>](val=35)</span>
+    <span class="label label-dtor" id="label-dtor-1"><a href="#label-ctor-1">dtor</a></span><i>&lt;tmp_1&gt;</i><span class="var-info">(<a class="var-info-idx" href="#label-ctor-1">#1</a>)[0x1245340:<span class="var-info-cell">1</span>](val=35)</span>
+    <span class="label label-dtor" id="label-dtor-2"><a href="#label-ctor-2">dtor</a></span>cur<span class="var-info">(<a class="var-info-idx" href="#label-ctor-2">#2</a>)[0x7ffeb3d2b568:<span class="var-info-cell">0</span>](val=79)</span>
+    <span class="label label-ctor" id="label-ctor-5"><a href="#label-dtor-5">ctor</a></span>cur<span class="var-info">(<a class="var-info-idx" href="#label-ctor-5">#5</a>)[0x7ffeb3d2b568:<span class="var-info-cell">0</span>](val=68)</span>
+    <span class="label label-copy" id="label-ctor-6"><a href="#label-dtor-6">COPY</a></span><i>&lt;tmp_6&gt;</i><span class="var-info">(<a class="var-info-idx" href="#label-ctor-6">#6</a>)[0x1245390:<span class="var-info-cell">4</span>](val=0)</span> from cur<span class="var-info">(<a class="var-info-idx" href="#label-ctor-5">#5</a>)[0x7ffeb3d2b568:<span class="var-info-cell">0</span>](val=68)</span>
+    <span class="label label-copy" id="label-ctor-7"><a href="#label-dtor-7">COPY</a></span><i>&lt;tmp_7&gt;</i><span class="var-info">(<a class="var-info-idx" href="#label-ctor-7">#7</a>)[0x1245360:<span class="var-info-cell">5</span>](val=0)</span> from <i>&lt;tmp_4&gt;</i><span class="var-info">(<a class="var-info-idx" href="#label-ctor-4">#4</a>)[0x1245870:<span class="var-info-cell">3</span>](val=35)</span>
+    <span class="label label-copy" id="label-ctor-8"><a href="#label-dtor-8">COPY</a></span><i>&lt;tmp_8&gt;</i><span class="var-info">(<a class="var-info-idx" href="#label-ctor-8">#8</a>)[0x1245378:<span class="var-info-cell">6</span>](val=0)</span> from <i>&lt;tmp_3&gt;</i><span class="var-info">(<a class="var-info-idx" href="#label-ctor-3">#3</a>)[0x1245888:<span class="var-info-cell">2</span>](val=79)</span>
+    <span class="label label-dtor" id="label-dtor-4"><a href="#label-ctor-4">dtor</a></span><i>&lt;tmp_4&gt;</i><span class="var-info">(<a class="var-info-idx" href="#label-ctor-4">#4</a>)[0x1245870:<span class="var-info-cell">3</span>](val=35)</span>
+    <span class="label label-dtor" id="label-dtor-3"><a href="#label-ctor-3">dtor</a></span><i>&lt;tmp_3&gt;</i><span class="var-info">(<a class="var-info-idx" href="#label-ctor-3">#3</a>)[0x1245888:<span class="var-info-cell">2</span>](val=79)</span>
+    <span class="label label-dtor" id="label-dtor-5"><a href="#label-ctor-5">dtor</a></span>cur<span class="var-info">(<a class="var-info-idx" href="#label-ctor-5">#5</a>)[0x7ffeb3d2b568:<span class="var-info-cell">0</span>](val=68)</span>
+    <span class="label label-ctor" id="label-ctor-9"><a href="#label-dtor-9">ctor</a></span>cur<span class="var-info">(<a class="var-info-idx" href="#label-ctor-9">#9</a>)[0x7ffeb3d2b568:<span class="var-info-cell">0</span>](val=89)</span>
+    <span class="label label-copy" id="label-ctor-10"><a href="#label-dtor-10">COPY</a></span><i>&lt;tmp_10&gt;</i><span class="var-info">(<a class="var-info-idx" href="#label-ctor-10">#10</a>)[0x12453a8:<span class="var-info-cell">7</span>](val=0)</span> from cur<span class="var-info">(<a class="var-info-idx" href="#label-ctor-9">#9</a>)[0x7ffeb3d2b568:<span class="var-info-cell">0</span>](val=89)</span>
+    <span class="label label-dtor" id="label-dtor-9"><a href="#label-ctor-9">dtor</a></span>cur<span class="var-info">(<a class="var-info-idx" href="#label-ctor-9">#9</a>)[0x7ffeb3d2b568:<span class="var-info-cell">0</span>](val=89)</span>
+    <span class="label label-ctor" id="label-ctor-11"><a href="#label-dtor-11">ctor</a></span>cur<span class="var-info">(<a class="var-info-idx" href="#label-ctor-11">#11</a>)[0x7ffeb3d2b568:<span class="var-info-cell">0</span>](val=26)</span>
+    <span class="label label-copy" id="label-ctor-12"><a href="#label-dtor-12">COPY</a></span><i>&lt;tmp_12&gt;</i><span class="var-info">(<a class="var-info-idx" href="#label-ctor-12">#12</a>)[0x1245430:<span class="var-info-cell">8</span>](val=0)</span> from cur<span class="var-info">(<a class="var-info-idx" href="#label-ctor-11">#11</a>)[0x7ffeb3d2b568:<span class="var-info-cell">0</span>](val=26)</span>
+    <span class="label label-copy" id="label-ctor-13"><a href="#label-dtor-13">COPY</a></span><i>&lt;tmp_13&gt;</i><span class="var-info">(<a class="var-info-idx" href="#label-ctor-13">#13</a>)[0x12453d0:<span class="var-info-cell">9</span>](val=0)</span> from <i>&lt;tmp_7&gt;</i><span class="var-info">(<a class="var-info-idx" href="#label-ctor-7">#7</a>)[0x1245360:<span class="var-info-cell">5</span>](val=35)</span>
+    <span class="label label-copy" id="label-ctor-14"><a href="#label-dtor-14">COPY</a></span><i>&lt;tmp_14&gt;</i><span class="var-info">(<a class="var-info-idx" href="#label-ctor-14">#14</a>)[0x12453e8:<span class="var-info-cell">10</span>](val=0)</span> from <i>&lt;tmp_8&gt;</i><span class="var-info">(<a class="var-info-idx" href="#label-ctor-8">#8</a>)[0x1245378:<span class="var-info-cell">6</span>](val=79)</span>
+    <span class="label label-copy" id="label-ctor-15"><a href="#label-dtor-15">COPY</a></span><i>&lt;tmp_15&gt;</i><span class="var-info">(<a class="var-info-idx" href="#label-ctor-15">#15</a>)[0x1245400:<span class="var-info-cell">11</span>](val=0)</span> from <i>&lt;tmp_6&gt;</i><span class="var-info">(<a class="var-info-idx" href="#label-ctor-6">#6</a>)[0x1245390:<span class="var-info-cell">4</span>](val=68)</span>
+    <span class="label label-copy" id="label-ctor-16"><a href="#label-dtor-16">COPY</a></span><i>&lt;tmp_16&gt;</i><span class="var-info">(<a class="var-info-idx" href="#label-ctor-16">#16</a>)[0x1245418:<span class="var-info-cell">12</span>](val=0)</span> from <i>&lt;tmp_10&gt;</i><span class="var-info">(<a class="var-info-idx" href="#label-ctor-10">#10</a>)[0x12453a8:<span class="var-info-cell">7</span>](val=89)</span>
+    <span class="label label-dtor" id="label-dtor-7"><a href="#label-ctor-7">dtor</a></span><i>&lt;tmp_7&gt;</i><span class="var-info">(<a class="var-info-idx" href="#label-ctor-7">#7</a>)[0x1245360:<span class="var-info-cell">5</span>](val=35)</span>
+    <span class="label label-dtor" id="label-dtor-8"><a href="#label-ctor-8">dtor</a></span><i>&lt;tmp_8&gt;</i><span class="var-info">(<a class="var-info-idx" href="#label-ctor-8">#8</a>)[0x1245378:<span class="var-info-cell">6</span>](val=79)</span>
+    <span class="label label-dtor" id="label-dtor-6"><a href="#label-ctor-6">dtor</a></span><i>&lt;tmp_6&gt;</i><span class="var-info">(<a class="var-info-idx" href="#label-ctor-6">#6</a>)[0x1245390:<span class="var-info-cell">4</span>](val=68)</span>
+    <span class="label label-dtor" id="label-dtor-10"><a href="#label-ctor-10">dtor</a></span><i>&lt;tmp_10&gt;</i><span class="var-info">(<a class="var-info-idx" href="#label-ctor-10">#10</a>)[0x12453a8:<span class="var-info-cell">7</span>](val=89)</span>
+    <span class="label label-dtor" id="label-dtor-11"><a href="#label-ctor-11">dtor</a></span>cur<span class="var-info">(<a class="var-info-idx" href="#label-ctor-11">#11</a>)[0x7ffeb3d2b568:<span class="var-info-cell">0</span>](val=26)</span>
+    <span class="dbg-msg">[dbg] <i>Bubble sort</i></span>
+    <span class="func-info">bubbleSort {
+</span>        <span class="label label-bin">bin<span class="opstr">(>)</span></span><i>&lt;tmp_13&gt;</i><span class="var-info">(<a class="var-info-idx" href="#label-ctor-13">#13</a>)[0x12453d0:<span class="var-info-cell">9</span>](val=35)</span> with <i>&lt;tmp_14&gt;</i><span class="var-info">(<a class="var-info-idx" href="#label-ctor-14">#14</a>)[0x12453e8:<span class="var-info-cell">10</span>](val=79)</span>
+        <span class="label label-bin">bin<span class="opstr">(>)</span></span><i>&lt;tmp_14&gt;</i><span class="var-info">(<a class="var-info-idx" href="#label-ctor-14">#14</a>)[0x12453e8:<span class="var-info-cell">10</span>](val=79)</span> with <i>&lt;tmp_15&gt;</i><span class="var-info">(<a class="var-info-idx" href="#label-ctor-15">#15</a>)[0x1245400:<span class="var-info-cell">11</span>](val=68)</span>
+        <span class="func-info">swap {
+</span>            <span class="label label-move" id="label-ctor-17"><a href="#label-dtor-17">MOVE</a></span><i>&lt;tmp_17&gt;</i><span class="var-info">(<a class="var-info-idx" href="#label-ctor-17">#17</a>)[0x7ffeb3d2b440:<span class="var-info-cell">13</span>](val=0)</span> from <i>&lt;tmp_14&gt;</i><span class="var-info">(<a class="var-info-idx" href="#label-ctor-14">#14</a>)[0x12453e8:<span class="var-info-cell">10</span>](val=79)</span>
+            <span class="label label-move">MOVE<span class="opstr">(=)</span></span><i>&lt;tmp_14&gt;</i><span class="var-info">(<a class="var-info-idx" href="#label-ctor-14">#14</a>)[0x12453e8:<span class="var-info-cell">10</span>](val=79)</span> from <i>&lt;tmp_15&gt;</i><span class="var-info">(<a class="var-info-idx" href="#label-ctor-15">#15</a>)[0x1245400:<span class="var-info-cell">11</span>](val=79)</span>
+            <span class="label label-move">MOVE<span class="opstr">(=)</span></span><i>&lt;tmp_15&gt;</i><span class="var-info">(<a class="var-info-idx" href="#label-ctor-15">#15</a>)[0x1245400:<span class="var-info-cell">11</span>](val=79)</span> from <i>&lt;tmp_17&gt;</i><span class="var-info">(<a class="var-info-idx" href="#label-ctor-17">#17</a>)[0x7ffeb3d2b440:<span class="var-info-cell">13</span>](val=79)</span>
+            <span class="label label-dtor" id="label-dtor-17"><a href="#label-ctor-17">dtor</a></span><i>&lt;tmp_17&gt;</i><span class="var-info">(<a class="var-info-idx" href="#label-ctor-17">#17</a>)[0x7ffeb3d2b440:<span class="var-info-cell">13</span>](val=79)</span>
+        <span class="func-info">}
+</span>        <span class="label label-bin">bin<span class="opstr">(>)</span></span><i>&lt;tmp_15&gt;</i><span class="var-info">(<a class="var-info-idx" href="#label-ctor-15">#15</a>)[0x1245400:<span class="var-info-cell">11</span>](val=79)</span> with <i>&lt;tmp_16&gt;</i><span class="var-info">(<a class="var-info-idx" href="#label-ctor-16">#16</a>)[0x1245418:<span class="var-info-cell">12</span>](val=89)</span>
+        <span class="label label-bin">bin<span class="opstr">(>)</span></span><i>&lt;tmp_16&gt;</i><span class="var-info">(<a class="var-info-idx" href="#label-ctor-16">#16</a>)[0x1245418:<span class="var-info-cell">12</span>](val=89)</span> with <i>&lt;tmp_12&gt;</i><span class="var-info">(<a class="var-info-idx" href="#label-ctor-12">#12</a>)[0x1245430:<span class="var-info-cell">8</span>](val=26)</span>
+        <span class="func-info">swap {
+</span>            <span class="label label-move" id="label-ctor-18"><a href="#label-dtor-18">MOVE</a></span><i>&lt;tmp_18&gt;</i><span class="var-info">(<a class="var-info-idx" href="#label-ctor-18">#18</a>)[0x7ffeb3d2b440:<span class="var-info-cell">13</span>](val=0)</span> from <i>&lt;tmp_16&gt;</i><span class="var-info">(<a class="var-info-idx" href="#label-ctor-16">#16</a>)[0x1245418:<span class="var-info-cell">12</span>](val=89)</span>
+            <span class="label label-move">MOVE<span class="opstr">(=)</span></span><i>&lt;tmp_16&gt;</i><span class="var-info">(<a class="var-info-idx" href="#label-ctor-16">#16</a>)[0x1245418:<span class="var-info-cell">12</span>](val=89)</span> from <i>&lt;tmp_12&gt;</i><span class="var-info">(<a class="var-info-idx" href="#label-ctor-12">#12</a>)[0x1245430:<span class="var-info-cell">8</span>](val=89)</span>
+            <span class="label label-move">MOVE<span class="opstr">(=)</span></span><i>&lt;tmp_12&gt;</i><span class="var-info">(<a class="var-info-idx" href="#label-ctor-12">#12</a>)[0x1245430:<span class="var-info-cell">8</span>](val=89)</span> from <i>&lt;tmp_18&gt;</i><span class="var-info">(<a class="var-info-idx" href="#label-ctor-18">#18</a>)[0x7ffeb3d2b440:<span class="var-info-cell">13</span>](val=89)</span>
+            <span class="label label-dtor" id="label-dtor-18"><a href="#label-ctor-18">dtor</a></span><i>&lt;tmp_18&gt;</i><span class="var-info">(<a class="var-info-idx" href="#label-ctor-18">#18</a>)[0x7ffeb3d2b440:<span class="var-info-cell">13</span>](val=89)</span>
+        <span class="func-info">}
+</span>        <span class="label label-bin">bin<span class="opstr">(>)</span></span><i>&lt;tmp_13&gt;</i><span class="var-info">(<a class="var-info-idx" href="#label-ctor-13">#13</a>)[0x12453d0:<span class="var-info-cell">9</span>](val=35)</span> with <i>&lt;tmp_14&gt;</i><span class="var-info">(<a class="var-info-idx" href="#label-ctor-14">#14</a>)[0x12453e8:<span class="var-info-cell">10</span>](val=68)</span>
+        <span class="label label-bin">bin<span class="opstr">(>)</span></span><i>&lt;tmp_14&gt;</i><span class="var-info">(<a class="var-info-idx" href="#label-ctor-14">#14</a>)[0x12453e8:<span class="var-info-cell">10</span>](val=68)</span> with <i>&lt;tmp_15&gt;</i><span class="var-info">(<a class="var-info-idx" href="#label-ctor-15">#15</a>)[0x1245400:<span class="var-info-cell">11</span>](val=79)</span>
+        <span class="label label-bin">bin<span class="opstr">(>)</span></span><i>&lt;tmp_15&gt;</i><span class="var-info">(<a class="var-info-idx" href="#label-ctor-15">#15</a>)[0x1245400:<span class="var-info-cell">11</span>](val=79)</span> with <i>&lt;tmp_16&gt;</i><span class="var-info">(<a class="var-info-idx" href="#label-ctor-16">#16</a>)[0x1245418:<span class="var-info-cell">12</span>](val=26)</span>
+        <span class="func-info">swap {
+</span>            <span class="label label-move" id="label-ctor-19"><a href="#label-dtor-19">MOVE</a></span><i>&lt;tmp_19&gt;</i><span class="var-info">(<a class="var-info-idx" href="#label-ctor-19">#19</a>)[0x7ffeb3d2b440:<span class="var-info-cell">13</span>](val=79)</span> from <i>&lt;tmp_15&gt;</i><span class="var-info">(<a class="var-info-idx" href="#label-ctor-15">#15</a>)[0x1245400:<span class="var-info-cell">11</span>](val=79)</span>
+            <span class="label label-move">MOVE<span class="opstr">(=)</span></span><i>&lt;tmp_15&gt;</i><span class="var-info">(<a class="var-info-idx" href="#label-ctor-15">#15</a>)[0x1245400:<span class="var-info-cell">11</span>](val=79)</span> from <i>&lt;tmp_16&gt;</i><span class="var-info">(<a class="var-info-idx" href="#label-ctor-16">#16</a>)[0x1245418:<span class="var-info-cell">12</span>](val=79)</span>
+            <span class="label label-move">MOVE<span class="opstr">(=)</span></span><i>&lt;tmp_16&gt;</i><span class="var-info">(<a class="var-info-idx" href="#label-ctor-16">#16</a>)[0x1245418:<span class="var-info-cell">12</span>](val=79)</span> from <i>&lt;tmp_19&gt;</i><span class="var-info">(<a class="var-info-idx" href="#label-ctor-19">#19</a>)[0x7ffeb3d2b440:<span class="var-info-cell">13</span>](val=79)</span>
+            <span class="label label-dtor" id="label-dtor-19"><a href="#label-ctor-19">dtor</a></span><i>&lt;tmp_19&gt;</i><span class="var-info">(<a class="var-info-idx" href="#label-ctor-19">#19</a>)[0x7ffeb3d2b440:<span class="var-info-cell">13</span>](val=79)</span>
+        <span class="func-info">}
+</span>        <span class="label label-bin">bin<span class="opstr">(>)</span></span><i>&lt;tmp_13&gt;</i><span class="var-info">(<a class="var-info-idx" href="#label-ctor-13">#13</a>)[0x12453d0:<span class="var-info-cell">9</span>](val=35)</span> with <i>&lt;tmp_14&gt;</i><span class="var-info">(<a class="var-info-idx" href="#label-ctor-14">#14</a>)[0x12453e8:<span class="var-info-cell">10</span>](val=68)</span>
+        <span class="label label-bin">bin<span class="opstr">(>)</span></span><i>&lt;tmp_14&gt;</i><span class="var-info">(<a class="var-info-idx" href="#label-ctor-14">#14</a>)[0x12453e8:<span class="var-info-cell">10</span>](val=68)</span> with <i>&lt;tmp_15&gt;</i><span class="var-info">(<a class="var-info-idx" href="#label-ctor-15">#15</a>)[0x1245400:<span class="var-info-cell">11</span>](val=26)</span>
+        <span class="func-info">swap {
+</span>            <span class="label label-move" id="label-ctor-20"><a href="#label-dtor-20">MOVE</a></span><i>&lt;tmp_20&gt;</i><span class="var-info">(<a class="var-info-idx" href="#label-ctor-20">#20</a>)[0x7ffeb3d2b440:<span class="var-info-cell">13</span>](val=79)</span> from <i>&lt;tmp_14&gt;</i><span class="var-info">(<a class="var-info-idx" href="#label-ctor-14">#14</a>)[0x12453e8:<span class="var-info-cell">10</span>](val=68)</span>
+            <span class="label label-move">MOVE<span class="opstr">(=)</span></span><i>&lt;tmp_14&gt;</i><span class="var-info">(<a class="var-info-idx" href="#label-ctor-14">#14</a>)[0x12453e8:<span class="var-info-cell">10</span>](val=68)</span> from <i>&lt;tmp_15&gt;</i><span class="var-info">(<a class="var-info-idx" href="#label-ctor-15">#15</a>)[0x1245400:<span class="var-info-cell">11</span>](val=68)</span>
+            <span class="label label-move">MOVE<span class="opstr">(=)</span></span><i>&lt;tmp_15&gt;</i><span class="var-info">(<a class="var-info-idx" href="#label-ctor-15">#15</a>)[0x1245400:<span class="var-info-cell">11</span>](val=68)</span> from <i>&lt;tmp_20&gt;</i><span class="var-info">(<a class="var-info-idx" href="#label-ctor-20">#20</a>)[0x7ffeb3d2b440:<span class="var-info-cell">13</span>](val=68)</span>
+            <span class="label label-dtor" id="label-dtor-20"><a href="#label-ctor-20">dtor</a></span><i>&lt;tmp_20&gt;</i><span class="var-info">(<a class="var-info-idx" href="#label-ctor-20">#20</a>)[0x7ffeb3d2b440:<span class="var-info-cell">13</span>](val=68)</span>
+        <span class="func-info">}
+</span>        <span class="label label-bin">bin<span class="opstr">(>)</span></span><i>&lt;tmp_13&gt;</i><span class="var-info">(<a class="var-info-idx" href="#label-ctor-13">#13</a>)[0x12453d0:<span class="var-info-cell">9</span>](val=35)</span> with <i>&lt;tmp_14&gt;</i><span class="var-info">(<a class="var-info-idx" href="#label-ctor-14">#14</a>)[0x12453e8:<span class="var-info-cell">10</span>](val=26)</span>
+        <span class="func-info">swap {
+</span>            <span class="label label-move" id="label-ctor-21"><a href="#label-dtor-21">MOVE</a></span><i>&lt;tmp_21&gt;</i><span class="var-info">(<a class="var-info-idx" href="#label-ctor-21">#21</a>)[0x7ffeb3d2b440:<span class="var-info-cell">13</span>](val=0)</span> from <i>&lt;tmp_13&gt;</i><span class="var-info">(<a class="var-info-idx" href="#label-ctor-13">#13</a>)[0x12453d0:<span class="var-info-cell">9</span>](val=35)</span>
+            <span class="label label-move">MOVE<span class="opstr">(=)</span></span><i>&lt;tmp_13&gt;</i><span class="var-info">(<a class="var-info-idx" href="#label-ctor-13">#13</a>)[0x12453d0:<span class="var-info-cell">9</span>](val=35)</span> from <i>&lt;tmp_14&gt;</i><span class="var-info">(<a class="var-info-idx" href="#label-ctor-14">#14</a>)[0x12453e8:<span class="var-info-cell">10</span>](val=35)</span>
+            <span class="label label-move">MOVE<span class="opstr">(=)</span></span><i>&lt;tmp_14&gt;</i><span class="var-info">(<a class="var-info-idx" href="#label-ctor-14">#14</a>)[0x12453e8:<span class="var-info-cell">10</span>](val=35)</span> from <i>&lt;tmp_21&gt;</i><span class="var-info">(<a class="var-info-idx" href="#label-ctor-21">#21</a>)[0x7ffeb3d2b440:<span class="var-info-cell">13</span>](val=35)</span>
+            <span class="label label-dtor" id="label-dtor-21"><a href="#label-ctor-21">dtor</a></span><i>&lt;tmp_21&gt;</i><span class="var-info">(<a class="var-info-idx" href="#label-ctor-21">#21</a>)[0x7ffeb3d2b440:<span class="var-info-cell">13</span>](val=35)</span>
+        <span class="func-info">}
+</span>    <span class="func-info">}
+</span>    <span class="dbg-msg">[dbg] <i>Other stuff</i></span>
+    <span class="func-info">doMoreStuff {
+</span>        <span class="label label-bin">bin<span class="opstr">(<)</span></span><i>&lt;tmp_13&gt;</i><span class="var-info">(<a class="var-info-idx" href="#label-ctor-13">#13</a>)[0x12453d0:<span class="var-info-cell">9</span>](val=26)</span> with <i>&lt;tmp_14&gt;</i><span class="var-info">(<a class="var-info-idx" href="#label-ctor-14">#14</a>)[0x12453e8:<span class="var-info-cell">10</span>](val=35)</span>
+        <span class="label label-ctor" id="label-ctor-22"><a href="#label-dtor-22">ctor</a></span>product<span class="var-info">(<a class="var-info-idx" href="#label-ctor-22">#22</a>)[0x7ffeb3d2b4e8:<span class="var-info-cell">14</span>](val=1)</span>
+        <span class="label label-bin">bin<span class="opstr">(*=)</span></span>product<span class="var-info">(<a class="var-info-idx" href="#label-ctor-22">#22</a>)[0x7ffeb3d2b4e8:<span class="var-info-cell">14</span>](val=1)</span> with <i>&lt;tmp_13&gt;</i><span class="var-info">(<a class="var-info-idx" href="#label-ctor-13">#13</a>)[0x12453d0:<span class="var-info-cell">9</span>](val=26)</span>
+        <span class="label label-bin">bin<span class="opstr">(*=)</span></span>product<span class="var-info">(<a class="var-info-idx" href="#label-ctor-22">#22</a>)[0x7ffeb3d2b4e8:<span class="var-info-cell">14</span>](val=26)</span> with <i>&lt;tmp_14&gt;</i><span class="var-info">(<a class="var-info-idx" href="#label-ctor-14">#14</a>)[0x12453e8:<span class="var-info-cell">10</span>](val=35)</span>
+        <span class="label label-bin">bin<span class="opstr">(*=)</span></span>product<span class="var-info">(<a class="var-info-idx" href="#label-ctor-22">#22</a>)[0x7ffeb3d2b4e8:<span class="var-info-cell">14</span>](val=910)</span> with <i>&lt;tmp_15&gt;</i><span class="var-info">(<a class="var-info-idx" href="#label-ctor-15">#15</a>)[0x1245400:<span class="var-info-cell">11</span>](val=68)</span>
+        <span class="label label-bin">bin<span class="opstr">(*=)</span></span>product<span class="var-info">(<a class="var-info-idx" href="#label-ctor-22">#22</a>)[0x7ffeb3d2b4e8:<span class="var-info-cell">14</span>](val=61880)</span> with <i>&lt;tmp_16&gt;</i><span class="var-info">(<a class="var-info-idx" href="#label-ctor-16">#16</a>)[0x1245418:<span class="var-info-cell">12</span>](val=79)</span>
+        <span class="label label-bin">bin<span class="opstr">(*=)</span></span>product<span class="var-info">(<a class="var-info-idx" href="#label-ctor-22">#22</a>)[0x7ffeb3d2b4e8:<span class="var-info-cell">14</span>](val=4888520)</span> with <i>&lt;tmp_12&gt;</i><span class="var-info">(<a class="var-info-idx" href="#label-ctor-12">#12</a>)[0x1245430:<span class="var-info-cell">8</span>](val=89)</span>
+        <span class="label label-dtor" id="label-dtor-22"><a href="#label-ctor-22">dtor</a></span>product<span class="var-info">(<a class="var-info-idx" href="#label-ctor-22">#22</a>)[0x7ffeb3d2b4e8:<span class="var-info-cell">14</span>](val=435078280)</span>
+    <span class="func-info">}
+</span>    <span class="label label-dtor" id="label-dtor-13"><a href="#label-ctor-13">dtor</a></span><i>&lt;tmp_13&gt;</i><span class="var-info">(<a class="var-info-idx" href="#label-ctor-13">#13</a>)[0x12453d0:<span class="var-info-cell">9</span>](val=26)</span>
+    <span class="label label-dtor" id="label-dtor-14"><a href="#label-ctor-14">dtor</a></span><i>&lt;tmp_14&gt;</i><span class="var-info">(<a class="var-info-idx" href="#label-ctor-14">#14</a>)[0x12453e8:<span class="var-info-cell">10</span>](val=35)</span>
+    <span class="label label-dtor" id="label-dtor-15"><a href="#label-ctor-15">dtor</a></span><i>&lt;tmp_15&gt;</i><span class="var-info">(<a class="var-info-idx" href="#label-ctor-15">#15</a>)[0x1245400:<span class="var-info-cell">11</span>](val=68)</span>
+    <span class="label label-dtor" id="label-dtor-16"><a href="#label-ctor-16">dtor</a></span><i>&lt;tmp_16&gt;</i><span class="var-info">(<a class="var-info-idx" href="#label-ctor-16">#16</a>)[0x1245418:<span class="var-info-cell">12</span>](val=79)</span>
+    <span class="label label-dtor" id="label-dtor-12"><a href="#label-ctor-12">dtor</a></span><i>&lt;tmp_12&gt;</i><span class="var-info">(<a class="var-info-idx" href="#label-ctor-12">#12</a>)[0x1245430:<span class="var-info-cell">8</span>](val=89)</span>
+<span class="func-info">}
+</span><span class="dbg-msg">[dbg] <i>Total copies: 12</i></span>
+<span class="dbg-msg">[dbg] <i>Total moves:  15</i></span>
+</pre></body>
