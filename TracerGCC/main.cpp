@@ -5,10 +5,15 @@
 #include "visualizers/dot.h"
 
 
+// Uncomment to leave only the simplest testcase
+#define TESTCASE_VERY_SIMPLE
+
+
 using num_t = int;
 using wrapper_t = Tracer<num_t>;
 
 
+#ifndef TESTCASE_VERY_SIMPLE
 static void swap(wrapper_t &a, wrapper_t &b) {
     FUNC_GUARD;
 
@@ -53,6 +58,7 @@ static void doMoreStuff(const std::vector<wrapper_t> &nums) {
 
     printf("The product is: %d\n", (int)product);
 }
+#endif
 
 static void doMaxsStuff() {
     FUNC_GUARD;
@@ -63,9 +69,11 @@ static void doMaxsStuff() {
 
     c = a + b;
 
+    #if 0
     Trace().getInstance().addDbgMsg("Don't even know what else to show");
     swap(a, b);
     swap(b, c);
+    #endif
 }
 
 
@@ -82,6 +90,7 @@ int main() {
 
         printf("a + b = %d\n", (int)(a + b));
 
+        #ifndef TESTCASE_VERY_SIMPLE
         Trace::getInstance().addDbgMsg("Bubble sort preparations");
 
         std::vector<wrapper_t> nums{};
@@ -96,6 +105,7 @@ int main() {
 
         Trace::getInstance().addDbgMsg("Other stuff");
         doMoreStuff(nums);
+        #endif
 
         Trace::getInstance().addDbgMsg("Max's stuff");
         doMaxsStuff();
