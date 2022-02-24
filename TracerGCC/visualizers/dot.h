@@ -196,13 +196,16 @@ protected:
 
     class Vars {
     public:
+        std::function<void (unsigned idxFrom, unsigned idxTo, bool toInst)> drawUseEdge{[](...){}};
+
+
         VarState &getVarState(unsigned varIdx);
         inline VarState &getVarState(const TraceEntry::VarInfo &info) { return getVarState(info.idx); }
         inline VarState &operator[](unsigned varIdx) { return getVarState(varIdx); }
         inline VarState &operator[](const TraceEntry::VarInfo &info) { return getVarState(info); }
 
         void onCtor(unsigned opIdx, const TraceEntry::VarInfo &info);
-        void onUsed(unsigned opIdx, const TraceEntry::VarInfo &info);
+        void onUsed(unsigned opIdx, const TraceEntry::VarInfo &info, bool asInst);
         void onDtor(unsigned opIdx, const TraceEntry::VarInfo &info);
 
         void onChanged(unsigned opIdx, const TraceEntry::VarInfo &info,
@@ -222,7 +225,12 @@ public:
         TraceVisualizer(getTmpFileName(outputFile)),
         tmpFile{getTmpFileName(outputFile)},
         outputFile{outputFile},
-        dot{ofile} {}
+        dot{ofile} {
+        
+        vars.drawUseEdge = [this](unsigned idxFrom, unsigned idxTo, bool toInst) {
+            usageEdges.push_back({idxFrom, idxTo, toInst});
+        };
+    }
 
     virtual void visualize(const Trace &trace) override;
 
@@ -240,10 +248,18 @@ protected:
     unsigned nodesCnt = 0;
     std::vector<bool> nodesPresent{};
     Vars vars{};
+    #pragma region UsageEdge
+    struct UsageEdge {
+        unsigned idxFrom;
+        unsigned idxTo;
+        bool toInst;
+    };
+    #pragma endregion UsageEdge
+    std::vector<UsageEdge> usageEdges{};
 
     struct style {
         static constexpr std::string_view edge_timeline_color = "red";
-        static constexpr std::string_view edge_timeline_style = "solid";
+        static constexpr std::string_view edge_timeline_style = /*"solid"*/ "dashed";
 
         static constexpr std::string_view edge_lifespan_color = "black";
         static constexpr std::string_view edge_lifespan_style = "dashed";
@@ -263,8 +279,9 @@ protected:
 
     void dumpInfo();
     void dumpLegend();
-    void dumpOrdering();
+    void dumpOrderingEdges();
     void dumpPadding();
+    void dumpUsageEdges();
 
     void logVarInfo(const TraceEntry::VarInfo &info);
     void logEntry(const Trace &trace, unsigned idx);

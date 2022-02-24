@@ -313,7 +313,8 @@ void DotTraceVisualizer::endLog() {
 
     dumpInfo();
 
-    dumpOrdering();
+    dumpOrderingEdges();
+    dumpUsageEdges();
 
     dot.endGraph();
 
@@ -373,13 +374,14 @@ void DotTraceVisualizer::dumpLegend() {
     dot.endGraph();
 }
 
-void DotTraceVisualizer::dumpOrdering() {
+void DotTraceVisualizer::dumpOrderingEdges() {
     unsigned lastNode = 0;
 
     while (lastNode < nodesCnt && !nodesPresent[lastNode]) {
         ++lastNode;
     }
 
+    unsigned actionIdx = 1;
     for (unsigned node = lastNode + 1; node < nodesCnt; ++node) {
         if (!nodesPresent[node]) {
             continue;
@@ -388,24 +390,37 @@ void DotTraceVisualizer::dumpOrdering() {
         dot.writefEdge(NODE_FMT, lastNode).constraint().to(NODE_FMT, node)
             .arg("style", style::edge_timeline_style)
             .arg("color", style::edge_timeline_color)
-            .arg("weight", "5");
+            .arg("weight", "16")
+            .argf("xlabel", "%u", actionIdx++);
 
         lastNode = node;
     }
 }
 
 void DotTraceVisualizer::dumpPadding() {
+    // If I remove this completely, I somehow get the
+    // "newtrap: Trapezoid-table overflow 441" error,
+    // which is, apperently, a known issue since 2020
+
     dot.beginGraph("", "");
     //dot.writeArg("rank", "same");
     dot.writeDefaultArgs("node")
         .arg("style", "invis");
-    dot.writeNode("pad_1");
-    dot.writeNode("pad_2");
+    dot.writeNode("tmp_1");  // This, apparently, combats the problem somehow
+    //dot.writeNode("pad_2");
     dot.endGraph();
-    dot.writeEdge("pad_1", "pad_2", true)
-        .arg("style", "invis");
-    dot.writeEdge("pad_2", "node_0", true)
-        .arg("style", "invis");
+    //dot.writeEdge("pad_1", "pad_2", true)
+    //    .arg("style", "invis");
+    //dot.writeEdge("pad_2", "node_0", true)
+    //    .arg("style", "invis");
+}
+
+void DotTraceVisualizer::dumpUsageEdges() {
+    for (const auto &edge : usageEdges) {
+        writeEdge(edge.idxFrom, edge.idxTo, nullptr, /*edge.toInst ? "inst:w" : "other:w"*/ nullptr)
+            .arg("color", style::edge_usage_color)
+            .arg("style", style::edge_usage_style);
+    }
 }
 
 void DotTraceVisualizer::logEntry(const Trace &trace, unsigned idx) {
@@ -417,8 +432,11 @@ void DotTraceVisualizer::logEntry(const Trace &trace, unsigned idx) {
 
         dot.beginGraph("subgraph", std::string("cluster_func_") + std::to_string(idx));
 
-        dot.writeArg("style", "filled");
-        dot.writeArg("color", getFuncColor(entry.place.recursionDepth));
+        // dot.writeArg("style", "filled");
+        dot.writeArg("bgcolor", getFuncColor(entry.place.recursionDepth));
+        dot.writeArg("labeljust", "l");
+        // dot.writeArg("border", "1");
+
         auto html = dot.writeArgs().labelh();
         html.openTag("i");
         html.openTag("b");
@@ -426,7 +444,6 @@ void DotTraceVisualizer::logEntry(const Trace &trace, unsigned idx) {
         html.closeTag();
         html.closeTag();
         html.finish();
-        dot.writeArg("labeljust", "l");
 
         nodesPresent[idx] = false;
     } break;
@@ -480,7 +497,6 @@ void DotTraceVisualizer::logEntry(const Trace &trace, unsigned idx) {
         if (isCtor) {
             vars.onCtor(idx, entry.inst);
         }
-        vars.onUsed(idx, entry.other);
 
         vars.onChanged(idx, entry.inst, entry.other, 
                        [/*isCtor,*/ isCopy/*, &entry*/](std::string &expr, const std::string_view &otherExpr) {
@@ -497,16 +513,14 @@ void DotTraceVisualizer::logEntry(const Trace &trace, unsigned idx) {
             // TODO: This might react weird due to string_view. Should probably limit length. Also in the other ones as well
             expr = helpers::sprintfxx("(%s %s %s)", expr.c_str(), entry.opStr, otherExpr.data());
         });
-
-        vars.onUsed(idx, entry.other);
     } break;
 
     case TracedOp::Cmp: {
         writeNodeBinary(idx, helpers::sprintfxx("<b>cmp</b>(%s)", helpers::htmlEncode(entry.opStr).c_str()).c_str(),
                         "#6060C0", entry.inst, entry.other);
 
-        vars.onUsed(idx, entry.inst);
-        vars.onUsed(idx, entry.other);
+        vars.onUsed(idx, entry.inst, true);
+        vars.onUsed(idx, entry.other, false);
     } break;
 
     case TracedOp::Unary: {
@@ -536,7 +550,7 @@ void DotTraceVisualizer::compileOutput(bool debug) const {
     std::fs::remove(outputFile);
 
     std::ostringstream cmd{};
-    cmd << "dot -Tsvg " << tmpFile << " -o " << outputFile;
+    cmd << "dot -x -Tsvg " << tmpFile << " -o " << outputFile;
     if (debug) {
         cmd << " -v";
     }
@@ -672,8 +686,15 @@ DotTraceVisualizer::writeEdge(unsigned idxFrom, unsigned idxTo) {
 DotTraceVisualizer::_ArgsWriteProxy
 DotTraceVisualizer::writeEdge(unsigned idxFrom, unsigned idxTo,
                               const char *portFrom, const char *portTo) {
-    return dot.writefEdge(NODE_PORT_FMT, idxFrom, portFrom)
-                      .to(NODE_PORT_FMT, idxTo, portTo);
+    std::string from = portFrom ? 
+        helpers::sprintfxx(NODE_PORT_FMT, idxFrom, portFrom) :
+        helpers::sprintfxx(NODE_FMT,      idxFrom);
+    
+    std::string to = portTo ? 
+        helpers::sprintfxx(NODE_PORT_FMT, idxTo, portTo) :
+        helpers::sprintfxx(NODE_FMT,      idxTo);
+
+    return dot.writeEdge(from, to);
 }
 
 #pragma region Vars
@@ -689,35 +710,45 @@ void DotTraceVisualizer::Vars::onCtor(unsigned opIdx, const TraceEntry::VarInfo 
     auto &state = getVarState(info);
 
     state.ctorOpIdx = opIdx;
+
+    onUsed(opIdx, info, true);
+    
     state.lastChangeOpIdx = opIdx;
-    state.lastUseOpIdx = opIdx;
     state.expression = info.buildNameStr();
-    state.lastAddr = info.addr;
 }
 
-void DotTraceVisualizer::Vars::onUsed(unsigned opIdx, const TraceEntry::VarInfo &info) {
+void DotTraceVisualizer::Vars::onUsed(unsigned opIdx, const TraceEntry::VarInfo &info, bool asInst) {
     auto &state = getVarState(info);
 
+    constexpr bool FROM_CHANGE = false;
+
+    unsigned prevOpIdx = FROM_CHANGE ? state.lastChangeOpIdx : state.lastUseOpIdx;
     state.lastUseOpIdx = opIdx;
-    state.lastAddr = info.addr;
+
+    if (prevOpIdx == state.BAD_IDX || prevOpIdx == opIdx) {
+        return;
+    }
+
+    // TODO: Edge
+    drawUseEdge(prevOpIdx, opIdx, asInst);
 }
 
 void DotTraceVisualizer::Vars::onDtor(unsigned opIdx, const TraceEntry::VarInfo &info) {
     auto &state = getVarState(info);
 
+    // onUsed(opIdx, info, true);
+    
     state.dtorOpIdx = opIdx;
     state.lastChangeOpIdx = opIdx;
-    state.lastUseOpIdx = opIdx;
-    state.lastAddr = info.addr;
 }
 
 void DotTraceVisualizer::Vars::onChanged(unsigned opIdx, const TraceEntry::VarInfo &info,
                                          std::function<void (std::string &curExpr)> operation) {
     auto &state = getVarState(info);
 
+    onUsed(opIdx, info, true);
+
     state.lastChangeOpIdx = opIdx;
-    state.lastUseOpIdx = opIdx;
-    state.lastAddr = info.addr;
     operation(state.expression);
 }
 
@@ -728,12 +759,10 @@ void DotTraceVisualizer::Vars::onChanged(unsigned opIdx, const TraceEntry::VarIn
     auto &state      = getVarState(info);
     auto &stateOther = getVarState(otherInfo);
 
+    onUsed(opIdx, info, true);
     state.lastChangeOpIdx = opIdx;
-    state.lastUseOpIdx = opIdx;
-    state.lastAddr = info.addr;
 
-    stateOther.lastUseOpIdx = opIdx;
-    stateOther.lastAddr = info.addr;
+    onUsed(opIdx, otherInfo, false);
 
     operation(state.expression, stateOther.expression);
 }
