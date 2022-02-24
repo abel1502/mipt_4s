@@ -74,9 +74,6 @@ int main() {
 
     Trace::getInstance().reset();
 
-    Trace::getInstance().addDbgMsg("Varibale info format: name (#index)[address:ptr cell](val=value)");
-    Trace::getInstance().addDbgMsg("For example: counter (#5)[0xffff0000:2](val=123)");
-
     {
         FUNC_GUARD;
 
