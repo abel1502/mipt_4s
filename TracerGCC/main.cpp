@@ -3,16 +3,21 @@
 #include "trace.h"
 #include "visualizers/html.h"
 #include "visualizers/dot.h"
+#include "rvalues_testbed.h"
 
 
 // Uncomment to leave only the simplest testcase
-#define TESTCASE_VERY_SIMPLE
+//#define TESTCASE_VERY_SIMPLE
+
+// Uncomment to test rvalues stuff instead
+#define TESTCASE_RVALUES
 
 
 using num_t = int;
 using wrapper_t = Tracer<num_t>;
 
 
+#ifndef TESTCASE_RVALUES
 #ifndef TESTCASE_VERY_SIMPLE
 static void swap(wrapper_t &a, wrapper_t &b) {
     FUNC_GUARD;
@@ -75,6 +80,7 @@ static void doMaxsStuff() {
     swap(b, c);
     #endif
 }
+#endif
 
 
 int main() {
@@ -82,6 +88,7 @@ int main() {
 
     Trace::getInstance().reset();
 
+    #ifndef TESTCASE_RVALUES
     {
         FUNC_GUARD;
 
@@ -122,6 +129,9 @@ int main() {
     #if 1
     DotTraceVisualizer{std::fs::path{logPath}.append("log.svg")}
         .visualize(Trace::getInstance());
+    #endif
+    #else  // defined(TESTCASE_RVALUES)
+    testRvalues();
     #endif
 
     return 0;
