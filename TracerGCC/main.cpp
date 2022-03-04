@@ -7,10 +7,10 @@
 
 
 // Uncomment to leave only the simplest testcase
-//#define TESTCASE_VERY_SIMPLE
+// #define TESTCASE_VERY_SIMPLE
 
 // Uncomment to test rvalues stuff instead
-#define TESTCASE_RVALUES
+// #define TESTCASE_RVALUES
 
 
 using num_t = int;
@@ -86,9 +86,11 @@ static void doMaxsStuff() {
 int main() {
     abel::verbosity = 2;
 
-    Trace::getInstance().reset();
 
     #ifndef TESTCASE_RVALUES
+    #if 0
+    Trace::getInstance().reset();
+
     {
         FUNC_GUARD;
 
@@ -130,6 +132,36 @@ int main() {
     DotTraceVisualizer{std::fs::path{logPath}.append("log.svg")}
         .visualize(Trace::getInstance());
     #endif
+    #endif
+
+    TRACE_CODE("log",
+        Trace::getInstance().addDbgMsg("Hi!");
+
+        DECL_TVAR(num_t, a, 123);
+        DECL_TVAR(num_t, b, 456);
+
+        printf("a + b = %d\n", (int)(a + b));
+
+        #ifndef TESTCASE_VERY_SIMPLE
+        Trace::getInstance().addDbgMsg("Bubble sort preparations");
+
+        std::vector<wrapper_t> nums{};
+        for (unsigned i = 0; i < 5; ++i) {
+            DECL_TVAR(num_t, cur, (num_t)abel::randLL(100));
+
+            nums.push_back(cur);
+        }
+
+        Trace::getInstance().addDbgMsg("Bubble sort");
+        bubbleSort(nums);
+
+        Trace::getInstance().addDbgMsg("Other stuff");
+        doMoreStuff(nums);
+        #endif
+
+        Trace::getInstance().addDbgMsg("Max's stuff");
+        doMaxsStuff();
+    );
     #else  // defined(TESTCASE_RVALUES)
     testRvalues();
     #endif
