@@ -259,6 +259,7 @@ void DotOutput::HtmlLabelWriteProxy::writeEnd() {
 #pragma region DotTraceVisualizer
 void DotTraceVisualizer::visualize(const Trace &trace) {
     stats = {};
+    sourceText = trace.getSourceText();
     
     beginLog();
 
@@ -302,6 +303,7 @@ void DotTraceVisualizer::beginLog() {
     dumpLegend();
     // Intentionally missing, due to it needing the summary data that's only available in the end
     // dumpInfo();
+    dumpSourceText();
 
     dumpPadding();
 
@@ -370,6 +372,38 @@ void DotTraceVisualizer::dumpLegend() {
         .arg("color", style::edge_usage_color)
         .arg("style", style::edge_usage_style);
 
+    dot.endGraph();
+    dot.endGraph();
+}
+
+void DotTraceVisualizer::dumpSourceText() {
+    if (!sourceText) {
+        return;
+    }
+
+    std::string formattedSourceText{};
+
+    for (const auto chr : std::string_view{sourceText}) {
+        switch (chr) {
+            case '&' : formattedSourceText.append("&amp;");                 break;
+            case '\"': formattedSourceText.append("&quot;");                break;
+            case '\'': formattedSourceText.append("&apos;");                break;
+            case '<' : formattedSourceText.append("&lt;");                  break;
+            case '>' : formattedSourceText.append("&gt;");                  break;
+            case ';' : formattedSourceText.append("; <br align=\"left\"/>");  break;
+            default  : formattedSourceText.push_back(chr);                  break;
+        }
+    }
+
+    dot.beginGraph("subgraph", "cluster_metadata");
+    dot.beginGraph("subgraph", "cluster_source");
+    dot.writeArg("label", "Source code");
+
+    dot.writeNode("source_text")
+        .label("%s", formattedSourceText.c_str())
+        .arg("shape", "note")
+        .arg("fontname", "Consolas");
+    
     dot.endGraph();
     dot.endGraph();
 }

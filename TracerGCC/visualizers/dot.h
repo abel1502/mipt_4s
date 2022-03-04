@@ -256,6 +256,7 @@ protected:
     };
     #pragma endregion UsageEdge
     std::vector<UsageEdge> usageEdges{};
+    const char *sourceText = nullptr;
 
     struct style {
         static constexpr std::string_view edge_timeline_color = "red";
@@ -267,7 +268,7 @@ protected:
         static constexpr std::string_view edge_usage_color = "#6060C0";
         static constexpr std::string_view edge_usage_style = "solid";
 
-        // TODO
+        // TODO: ?
     };
 
     static constexpr char NODE_FMT[] = "node_%u";
@@ -279,6 +280,7 @@ protected:
 
     void dumpInfo();
     void dumpLegend();
+    void dumpSourceText();
     void dumpOrderingEdges();
     void dumpPadding();
     void dumpUsageEdges();
