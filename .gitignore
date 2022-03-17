@@ -7,4 +7,4 @@
 *.bak
 *.exe.log
 *.dmp
-*.marker.tss
+*.tss
