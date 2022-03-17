@@ -1,4 +1,5 @@
 #include <ACL/general.h>
+#include "array.h"
 
 
 int main() {

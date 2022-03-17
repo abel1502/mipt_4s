@@ -25,6 +25,8 @@ add_executable(
 	templatonks
 	
 	"main.cpp"
+	"array.h"
+
 )
 
 target_link_libraries(
