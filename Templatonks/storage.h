@@ -323,4 +323,33 @@ struct StaticLinearStorageAdapter {
 #pragma endregion StaticLinearStorage
 
 
+#pragma region DynamicChunkedStorage
+template <typename T, size_t ChunkSize>
+class DynamicChunkedStorage {
+    static constexpr size_t DEFAULT_CHUNKS = 4;
+    static_assert(std::is_move_constructible_v<T>);
+
+public:
+    static constexpr bool is_dynamic = true;
+    static constexpr size_t chunk_size = ChunkSize;
+
+
+
+protected:
+    T **chunks_{nullptr};
+
+    void ensure_item(size_t idx) {
+
+    }
+
+};
+
+template <size_t ChunkSize>
+struct DynamicChunkedStorageAdapter {
+    template <typename T>
+    using type = DynamicChunkedStorage<T, ChunkSize>;
+};
+#pragma endregion DynamicChunkedStorage
+
+
 }

@@ -121,6 +121,9 @@ using Vector = Array<T, DynamicLinearStorage>;
 
 template <typename T, size_t Size>
 using CArray = Array<T, StaticLinearStorageAdapter<Size>::template type>;
+
+template <typename T, size_t ChunkSize>
+using ChunkedArray = Array<T, DynamicChunkedStorageAdapter<ChunkSize>::template type>;
 #pragma endregion Aliases
 
 
