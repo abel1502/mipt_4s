@@ -45,6 +45,7 @@ concept Storage = true || ((requires (std::remove_cvref_t<St> storage,
 #pragma endregion Storage concept
 
 
+#pragma region DynamicLinearStorage
 template <typename T>
 class DynamicLinearStorage {
 protected:
@@ -204,6 +205,7 @@ protected:
     }
 
 };
+#pragma endregion DynamicLinearStorage
 
 
 }

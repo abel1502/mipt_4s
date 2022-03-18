@@ -10,6 +10,7 @@
 namespace mylib {
 
 
+#pragma region Array
 template <typename T_, template <typename T> typename Storage_>
 requires (!std::is_reference_v<T_> &&
           Storage<Storage_<T_>, T_>)
@@ -111,6 +112,7 @@ protected:
     storage_type storage;
 
 };
+#pragma endregion Array
 
 
 }
