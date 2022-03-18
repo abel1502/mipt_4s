@@ -245,4 +245,82 @@ protected:
 #pragma endregion DynamicLinearStorage
 
 
+#pragma region StaticLinearStorage
+template <typename T, size_t Size>
+class StaticLinearStorage {
+public:
+    static constexpr bool is_dynamic = false;
+
+
+    StaticLinearStorage() :
+        data_{} {}
+
+    template <typename ... Ts>
+    requires ((std::convertible_to<Ts, T> && ...) &&
+              sizeof...(Ts) <= Size)
+    StaticLinearStorage(Ts &&... values) :
+        data_{values...} {}
+
+    StaticLinearStorage(std::initializer_list<T> values) :
+        data_{} {
+
+        if (values.size() > size()) {
+            throw std::overflow_error("Too many values in initializer list");
+        }
+
+        for (unsigned i = 0; i < values.size(); ++i) {
+            data_[i] = std::data_(values)[i];
+        }
+    }
+
+    StaticLinearStorage(const StaticLinearStorage &other) = default;
+    StaticLinearStorage &operator=(const StaticLinearStorage &other) = default;
+    StaticLinearStorage(StaticLinearStorage &&other)
+        noexcept(std::is_nothrow_move_constructible_v<T>) = default;
+
+    StaticLinearStorage &operator=(StaticLinearStorage &&other)
+        noexcept(requires (T a, T b) { {std::swap(a, b)} noexcept; }) {
+
+        [&]<size_t ... Ns>(std::index_sequence<Ns...>) {
+            (std::swap(data_[Ns], other.data_[Ns]), ...);
+        }(std::make_index_sequence<Size>());
+
+        return *this;
+    }
+
+    ~StaticLinearStorage() = default;
+
+    constexpr T &item(size_t idx) {
+        if (idx >= size()) {
+            throw std::out_of_range("Index too large");
+        }
+
+        return data_[idx];
+    }
+
+    constexpr const T &item(size_t idx) const {
+        if (idx >= size()) {
+            throw std::out_of_range("Index too large");
+        }
+
+        return data_[idx];
+    }
+
+    constexpr size_t size() const noexcept {
+        return Size;
+    }
+
+protected:
+    T data_[Size];
+
+};
+
+template <size_t Size>
+struct StaticLinearStorageAdapter {
+    template <typename T>
+    using type = StaticLinearStorage<T, Size>;
+};
+#pragma endregion StaticLinearStorage
+
+
 }
