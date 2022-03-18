@@ -25,12 +25,17 @@ int main() {
     {
         mylib::Vector<bool> arr(15);
 
+        DBG("arr.size() = %zu", arr.size());
+
         arr[2] = true;
         arr[3] = true;
         arr[5] = true;
         arr[7] = true;
         arr[11] = true;
         arr[13] = true;
+
+        arr.push_back(false);
+        arr.push_back(true);
 
         for (unsigned i = 0; i < arr.size(); ++i) {
             DBG("arr[%u] = %s", i, arr[i] ? "true" : "false");
