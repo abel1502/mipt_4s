@@ -4,41 +4,10 @@
 #include <ACL/type_traits.h>
 #include <concepts>
 #include <new>
+#include "storage.h"
 
 
 namespace mylib {
-
-
-template <typename St, typename T>
-concept Storage = true || ((requires (std::remove_cvref_t<St> storage,
-                            const std::remove_cvref_t<St> const_storage,
-                            T item, size_t idx) {
-    // General requirements
-    St{};
-    storage.item(idx) = std::move(item);
-    { const_storage.item(idx) } -> std::convertible_to<const T &>;
-    { const_storage.size() } -> std::unsigned_integral;
-    { St::is_dynamic } -> std::same_as<bool>;
-}) && (!St::is_dynamic ||
-      requires (std::remove_cvref_t<St> storage,
-                const std::remove_cvref_t<St> const_storage,
-                T item, size_t idx) {
-    // Dynamic requirements
-    St{(size_t)1};
-    St{(size_t)1, (const T &)item};
-    { storage.expand_one() } -> std::same_as<T *>;
-    storage.remove_one();
-    storage.clear();
-}) && (St::is_dynamic ||
-      requires (std::remove_cvref_t<St> storage,
-                const std::remove_cvref_t<St> const_storage,
-                T item, size_t idx) {
-    // Static requirements
-    // (Mostly just ensuring constexpr-ness)
-    std::bool_constant<(std::declval<St>().size(), true)>();
-    std::bool_constant<(std::declval<const St>().item(1), true)>();
-    std::bool_constant<(std::declval<const St>().item(1) = std::move(std::declval<T>()), true)>();
-}));
 
 
 template <typename T_, template <typename T> typename Storage_>
