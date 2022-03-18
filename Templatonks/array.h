@@ -135,10 +135,10 @@ public:
 
     Array() : Base() {}
 
-    Array(size_type size) : Base(_bytes_ceil(size)), bits_last{size % 8} {}
+    Array(size_type size) : Base(_bytes_floor(size) + 1), bits_last{size % 8} {}
 
     Array(size_type size, value_type value) :
-        Base(_bytes_ceil(size), value ? 0xff : 0x00),
+        Base(_bytes_floor(size) + 1, value ? 0xff : 0x00),
         bits_last{size % 8} {
 
         if (size % 8 && value) {
@@ -147,7 +147,7 @@ public:
     }
 
     Array(std::initializer_list<value_type> values) :
-        Base(_bytes_ceil(values.size())), bits_last{values.size() % 8} {
+        Base(_bytes_floor(values.size()) + 1), bits_last{values.size() % 8} {
 
         uint8_t cur_bit = 0;
         unsigned cur_bit_size = 0;
@@ -216,7 +216,14 @@ public:
     }
 
     constexpr size_type size() const {
-        return storage.size() * 8 + bits_last;
+        size_type bytes = storage.size();
+
+        if (!bytes) {
+            // TODO: May be broken, theoretically...
+            return bits_last;
+        }
+
+        return (bytes - 1) * 8 + bits_last;
     }
 
     inline bool empty() const {
