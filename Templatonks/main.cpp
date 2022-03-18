@@ -1,5 +1,6 @@
 #include <ACL/general.h>
 #include "array.h"
+#include "dot.h"
 
 
 int main() {
@@ -40,6 +41,32 @@ int main() {
         for (unsigned i = 0; i < arr.size(); ++i) {
             DBG("arr[%u] = %s", i, arr[i] ? "true" : "false");
         }
+    }
+
+    {
+        DBG(" --- ChunkedArray test start");
+
+
+        DBG("Default {1 2 3}");
+        mylib::ChunkedArray<int, 32 / sizeof(int)> arr{1, 2, 3};
+
+        for (unsigned i = 0; i < 7; ++i) {
+            int val = i + 4;
+
+            arr.push_back(val);
+            DBG("Pushing %d", val);
+        }
+
+        for (unsigned i = 0; i < arr.size(); ++i) {
+            DBG("arr[%u] = %d", i, arr[i]);
+        }
+
+        while (!arr.empty()) {
+            DBG("Popping %d", arr[-1]);
+            arr.pop_back();
+        }
+
+        DBG(" --- ChunkedArray test end");
     }
 
     {
