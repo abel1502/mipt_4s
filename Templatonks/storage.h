@@ -259,7 +259,7 @@ public:
     requires ((std::convertible_to<Ts, T> && ...) &&
               sizeof...(Ts) <= Size)
     StaticLinearStorage(Ts &&... values) :
-        data_{values...} {}
+        data_{std::forward<Ts>(values)...} {}
 
     StaticLinearStorage(std::initializer_list<T> values) :
         data_{} {
