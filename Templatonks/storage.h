@@ -6,6 +6,7 @@
 #include <stdexcept>
 #include <algorithm>
 #include <initializer_list>
+#include <optional>
 
 
 namespace mylib {
@@ -191,7 +192,7 @@ protected:
 
             if (!data_) {
                 capacity_ = 0;
-                throw std::overflow_error("Out of memory");
+                throw std::bad_alloc();
             }
 
             return;
@@ -208,7 +209,7 @@ protected:
 
         T *new_data = (T *)calloc(new_capacity, sizeof(T));
         if (!new_data) {
-            throw std::overflow_error("Out of memory");
+            throw std::bad_alloc();
         }
 
         assert(new_capacity >= size_);
@@ -279,7 +280,7 @@ public:
         noexcept(std::is_nothrow_move_constructible_v<T>) = default;
 
     StaticLinearStorage &operator=(StaticLinearStorage &&other)
-        noexcept(requires (T a, T b) { {std::swap(a, b)} noexcept; }) {
+        noexcept(std::swappable<T>) {
 
         [&]<size_t ... Ns>(std::index_sequence<Ns...>) {
             (std::swap(data_[Ns], other.data_[Ns]), ...);
@@ -324,22 +325,230 @@ struct StaticLinearStorageAdapter {
 
 
 #pragma region DynamicChunkedStorage
+// IMPORTANT: Should always maintain at least one chunk, okay if empty
 template <typename T, size_t ChunkSize>
 class DynamicChunkedStorage {
+    #pragma region Protected stuff
+    static_assert(std::is_copy_constructible_v<T>);
+
     static constexpr size_t DEFAULT_CHUNKS = 4;
-    static_assert(std::is_move_constructible_v<T>);
+
+    static constexpr size_t chunk_size = ChunkSize;
+    static_assert(chunk_size > 0);
+
+    static constexpr size_t _chunk_idx   (size_t pos) { return pos / chunk_size; }
+    static constexpr size_t _chunk_offset(size_t pos) { return pos % chunk_size; }
+    #pragma endregion Protected stuff
 
 public:
     static constexpr bool is_dynamic = true;
-    static constexpr size_t chunk_size = ChunkSize;
 
 
+    DynamicChunkedStorage() :
+        chunks_(1), last_size_{0}, default_item_{} {}
+
+    DynamicChunkedStorage(size_t new_size) :
+        chunks_(new_size / chunk_size + 1),
+        last_size_{new_size % chunk_size},
+        default_item_{} {
+
+        static_assert(std::is_default_constructible_v<T>);
+    }
+
+    DynamicChunkedStorage(size_t new_size, const T &val) :
+        DynamicChunkedStorage(new_size) {
+
+        static_assert(std::is_copy_constructible_v<T>);
+
+        default_item_ = val;
+    }
+
+    DynamicChunkedStorage(std::initializer_list<T> values) :
+        DynamicChunkedStorage() {
+
+        for (auto &val : values) {
+            new (expand_one()) T(std::move(val));
+        }
+    }
+
+    DynamicChunkedStorage(const DynamicChunkedStorage &other) :
+        DynamicChunkedStorage() {
+
+        static_assert(std::is_copy_constructible_v<T>);
+
+        while (size < other.size) {
+            new (expand_one()) T(other.item(size));
+        }
+    }
+
+    DynamicChunkedStorage &operator=(const DynamicChunkedStorage &other) noexcept {
+        static_assert(std::is_copy_constructible_v<T>);
+
+        // TODO: Could be optimized, but who cares, really...
+        clear();
+
+        while (size < other.size) {
+            new (expand_one()) T(other.item(size));
+        }
+    }
+
+    DynamicChunkedStorage(DynamicChunkedStorage &&other) noexcept :
+        chunks_{std::move(other.chunks_)}, last_size_{other.last_size_},
+        default_item_{std::move(other.default_item_)} {
+
+        other.last_size_ = 0;
+    }
+
+    DynamicChunkedStorage &operator=(DynamicChunkedStorage &&other) noexcept {
+        std::swap(chunks_      , other.chunks_      );
+        std::swap(last_size_   , other.last_size_   );
+        std::swap(default_item_, other.default_item_);
+    }
+
+    ~DynamicChunkedStorage() noexcept {
+        clear();
+    }
+
+    T &item(size_t idx) {
+        if (idx >= size()) {
+            throw std::out_of_range("Index too large");
+        }
+
+        ensure_chunk_for(idx);
+
+        return chunks_.item(_chunk_idx(idx))[_chunk_offset(idx)];
+    }
+
+    inline const T &item(size_t idx) const {
+        return const_cast<DynamicLinearStorage *>(this)->data_(idx);
+    }
+
+    T *expand_one() {
+        ++last_size_;
+
+        if (last_size_ == chunk_size) {
+            last_size_ = 0;
+            *chunks_.expand_one() = nullptr;
+        }
+
+        ensure_chunk_for(size() - 1, false);
+
+        return &item(size() - 1);
+    }
+
+    void remove_one() {
+        if (size() == 0) {
+            throw std::overflow_error("Cannot remove from empty storage");
+        }
+
+        if (last_size_ == 0) {
+            clear_chunk(chunks_.size() - 1);
+
+            last_size_ = chunk_size;
+            chunks_.remove_one();
+        }
+        assert(chunks_.size() > 0);
+
+        last_size_--;
+
+        T *cur_chunk = chunks_.item(chunks_.size() - 1);
+
+        if (cur_chunk) {
+            cur_chunk[last_size_].~T();
+        }
+    }
+
+    void clear() noexcept {
+        for (unsigned i = 0; i < chunks_.size() - 1; ++i) {
+            clear_chunk(i);
+        }
+
+        chunks_.clear();
+        *chunks_.expand_one() = nullptr;
+        last_size_ = 0;
+        default_item_.reset();
+    }
+
+    inline size_t size() const {
+        assert(chunks_.size() > 0);
+
+        return (chunks_.size() - 1) * chunk_size + last_size_;
+    }
 
 protected:
-    T **chunks_{nullptr};
+    DynamicLinearStorage<T *> chunks_;
+    size_t last_size_;
+    std::optional<T> default_item_{};
 
-    void ensure_item(size_t idx) {
 
+    size_t get_chunk_size(size_t idx) {
+        assert(idx < chunks_.size());
+
+        size_t result = chunk_size;
+        if (idx + 1 == chunks_.size()) {
+            result = last_size_;
+        }
+
+        assert(result <= chunk_size);
+
+        return result;
+    }
+
+    void clear_chunk(size_t idx) {
+        T *cur_chunk = chunks_.item(idx);
+
+        if (!cur_chunk) {
+            return;
+        }
+
+        size_t cur_chunk_size = get_chunk_size(idx);
+
+        for (size_t i = 0; i < cur_chunk_size; ++i) {
+            cur_chunk[i].~T();
+        }
+
+        free(cur_chunk);
+
+        chunks_.item(idx) = nullptr;
+    }
+
+    void ensure_chunk_for(size_t idx, bool with_last = true) {
+        assert(idx < size());
+
+        size_t cur_chunk_idx = _chunk_idx(idx);
+        T *cur_chunk = chunks_.item(cur_chunk_idx);
+
+        if (cur_chunk) {
+            return;
+        }
+
+        bool haveTemplate = default_item_.has_value();
+
+        assert(( haveTemplate && std::is_copy_constructible_v   <T>) ||
+               (!haveTemplate && std::is_default_constructible_v<T>));
+
+        cur_chunk = (T *)calloc(chunk_size, sizeof(T));
+        if (!cur_chunk) {
+            throw std::bad_alloc();
+        }
+        chunks_.item(cur_chunk_idx) = cur_chunk;
+
+        size_t cur_chunk_size = get_chunk_size(cur_chunk_idx);
+        assert(cur_chunk_size > 0);
+
+        if (!with_last) {
+            --cur_chunk_size;
+        }
+
+        for (size_t i = 0; i < cur_chunk_size; ++i) {
+            // Okay, on second thought, screw exception handling
+            // for weird edge cases
+            if (haveTemplate) {
+                new (&cur_chunk[i]) T(default_item_.value());
+            } else {
+                new (&cur_chunk[i]) T();
+            }
+        }
     }
 
 };
