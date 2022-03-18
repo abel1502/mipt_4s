@@ -115,4 +115,13 @@ protected:
 #pragma endregion Array
 
 
+#pragma region Aliases
+template <typename T>
+using Vector = Array<T, DynamicLinearStorage>;
+
+template <typename T, size_t Size>
+using CArray = Array<T, StaticLinearStorageAdapter<Size>::template type>;
+#pragma endregion Aliases
+
+
 }
