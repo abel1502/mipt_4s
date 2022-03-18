@@ -1,6 +1,5 @@
 #include <ACL/general.h>
 #include "array.h"
-#include "storage.h"
 
 
 int main() {
@@ -8,13 +7,20 @@ int main() {
 
     DBG("It works!");
 
-    mylib::Array<int, mylib::DynamicLinearStorage> arr{};
+    {
+        mylib::Vector<int> arr{};
 
-    arr.push_back(123);
+        arr.push_back(123);
+        DBG("arr[-1] == %d", arr[-1]);
+        arr.pop_back();
+    }
 
-    DBG("arr[-1] == %d", arr[-1]);
+    {
+        mylib::CArray<int, 5> arr{1, 2, 3, 4, 5};
+        mylib::CArray<int, arr.size()> arr2 = arr;
 
-    arr.pop_back();
+        DBG("arr2[3] == %d", arr2[3]);
+    }
 
     return 0;
 }
