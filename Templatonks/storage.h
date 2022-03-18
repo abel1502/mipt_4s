@@ -88,6 +88,43 @@ public:
         }
     }
 
+    DynamicLinearStorage(const DynamicLinearStorage &other) {
+        static_assert(std::is_copy_constructible_v<T>);
+
+        ensure_capacity(other.capacity_);
+
+        for (; size < other.size; ++size) {
+            new (&data_[size]) T(other.data_[size]);
+        }
+    }
+
+    DynamicLinearStorage &operator=(const DynamicLinearStorage &other) noexcept {
+        static_assert(std::is_copy_constructible_v<T>);
+
+        // TODO: Could be optimized, but who cares, really...
+        clear();
+
+        ensure_capacity(other.capacity_);
+
+        for (; size < other.size; ++size) {
+            new (&data_[size]) T(other.data_[size]);
+        }
+    }
+
+    DynamicLinearStorage(DynamicLinearStorage &&other) noexcept :
+        data_{other.data_}, size_{other.size_}, capacity_{other.capacity_} {
+
+        other.data_ = nullptr;
+        other.size_ = 0;
+        other.capacity_ = 0;
+    }
+
+    DynamicLinearStorage &operator=(DynamicLinearStorage &&other) noexcept {
+        std::swap(data_    , other.data_    );
+        std::swap(size_    , other.size_    );
+        std::swap(capacity_, other.capacity_);
+    }
+
     ~DynamicLinearStorage() noexcept {
         clear();
         assert(!data_);
