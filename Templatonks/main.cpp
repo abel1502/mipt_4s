@@ -37,5 +37,14 @@ int main() {
         }
     }
 
+    {
+        math_test::Vector<long, 7>
+            a{1, 2, 3, 4, 5, 6, 7},
+            b{7, 6, 5, 4, 3, 2, 1};
+
+        auto res = a * b;
+        DBG("Dot product is %ld", res);
+    }
+
     return 0;
 }
