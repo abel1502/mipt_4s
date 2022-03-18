@@ -269,7 +269,7 @@ public:
         }
 
         for (unsigned i = 0; i < values.size(); ++i) {
-            data_[i] = std::data_(values)[i];
+            data_[i] = std::data(values)[i];
         }
     }
 

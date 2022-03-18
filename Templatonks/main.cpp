@@ -22,5 +22,20 @@ int main() {
         DBG("arr2[3] == %d", arr2[3]);
     }
 
+    {
+        mylib::Vector<bool> arr(15);
+
+        arr[2] = true;
+        arr[3] = true;
+        arr[5] = true;
+        arr[7] = true;
+        arr[11] = true;
+        arr[13] = true;
+
+        for (unsigned i = 0; i < arr.size(); ++i) {
+            DBG("arr[%u] = %s", i, arr[i] ? "true" : "false");
+        }
+    }
+
     return 0;
 }
