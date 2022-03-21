@@ -103,6 +103,22 @@ public:
         return size() == 0;
     }
 
+    inline T &front() {
+        return (*this)[0];
+    }
+
+    inline const T &front() const {
+        return const_cast<Array *>(this)->front();
+    }
+
+    inline T &back() {
+        return (*this)[-1];
+    }
+
+    inline const T &back() const {
+        return const_cast<Array *>(this)->back();
+    }
+
 protected:
     storage_type storage;
 
@@ -230,6 +246,14 @@ public:
         static_assert(storage.is_dynamic);
 
         return size() == 0;
+    }
+
+    inline bool front() const {
+        return (*this)[0];
+    }
+
+    inline bool back() const {
+        return (*this)[-1];
     }
 
 protected:
