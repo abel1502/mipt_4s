@@ -256,6 +256,14 @@ public:
         return (*this)[-1];
     }
 
+    inline reference front() {
+        return (*this)[0];
+    }
+
+    inline reference back() {
+        return (*this)[-1];
+    }
+
 protected:
     uint8_t bits_last{0};
 
