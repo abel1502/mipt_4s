@@ -103,19 +103,19 @@ public:
         return size() == 0;
     }
 
-    inline T &front() {
+    inline reference front() {
         return (*this)[0];
     }
 
-    inline const T &front() const {
+    inline const_reference front() const {
         return const_cast<Array *>(this)->front();
     }
 
-    inline T &back() {
+    inline reference back() {
         return (*this)[-1];
     }
 
-    inline const T &back() const {
+    inline const_reference back() const {
         return const_cast<Array *>(this)->back();
     }
 
@@ -149,7 +149,7 @@ protected:
 public:
     using value_type = bool;
     using reference = ReferenceProxy;
-    using const_reference = const ReferenceProxy;
+    using const_reference = value_type;  // Intentionally
     using size_type = Base::size_type;
     using difference_type = Base::difference_type;
 
@@ -252,19 +252,19 @@ public:
         return size() == 0;
     }
 
-    inline bool front() const {
-        return (*this)[0];
-    }
-
-    inline bool back() const {
-        return (*this)[-1];
-    }
-
     inline reference front() {
         return (*this)[0];
     }
 
+    inline const_reference front() const {
+        return (*this)[0];
+    }
+
     inline reference back() {
+        return (*this)[-1];
+    }
+
+    inline const_reference back() const {
         return (*this)[-1];
     }
 
