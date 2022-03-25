@@ -123,6 +123,12 @@ public:
         std::swap(storage, other.storage);
     }
 
+    inline void allocate_now() {
+        if constexpr (requires (storage_type storage) { storage.allocate_now(); }) {
+            storage.allocate_now();
+        }
+    }
+
 protected:
     storage_type storage;
 
@@ -272,6 +278,8 @@ public:
         Base::swap(other);
         std::swap(bits_last, other.bits_last);
     }
+
+    using Base::allocate_now;
 
 protected:
     uint8_t bits_last{0};

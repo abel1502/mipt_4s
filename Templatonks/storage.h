@@ -475,6 +475,13 @@ public:
         return (chunks_.size() - 1) * chunk_size + last_size_;
     }
 
+    void allocate_now() {
+        size_t sz = size();
+        for (size_t i = 0; i < size(); ++i) {
+            ensure_chunk_for(i);
+        }
+    }
+
 protected:
     DynamicLinearStorage<T *> chunks_;
     size_t last_size_;
