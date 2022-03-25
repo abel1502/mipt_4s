@@ -119,6 +119,10 @@ public:
         return const_cast<Array *>(this)->back();
     }
 
+    void swap(Array &other) {
+        std::swap(storage, other.storage);
+    }
+
 protected:
     storage_type storage;
 
@@ -262,6 +266,11 @@ public:
 
     inline reference back() {
         return (*this)[-1];
+    }
+
+    void swap(Array &other) {
+        Base::swap(other);
+        std::swap(bits_last, other.bits_last);
     }
 
 protected:
