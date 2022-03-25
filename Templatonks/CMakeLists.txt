@@ -28,6 +28,7 @@ add_executable(
 	"array.h"
 	"storage.h"
 	"dot.h"
+	"test.h"
 )
 
 target_link_libraries(

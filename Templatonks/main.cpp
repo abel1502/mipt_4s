@@ -1,6 +1,7 @@
 #include <ACL/general.h>
 #include "array.h"
 #include "dot.h"
+#include "test.h"
 
 
 int main() {
@@ -77,6 +78,12 @@ int main() {
         auto res = a * b;
         DBG("Dot product is %ld", res);
     }
+
+    /* {
+        ArrayTester<mylib::Vector<int>> tester{};
+
+        tester.test();
+    } */
 
     return 0;
 }
