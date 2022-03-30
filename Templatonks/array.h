@@ -317,6 +317,23 @@ protected:
 template <typename T>
 using Vector = Array<T, DynamicLinearStorage>;
 
+#pragma region CArray impl
+namespace _impl {
+
+template <typename T, size_t Size>
+struct _helper_CArray {
+    using type = Array<T, StaticLinearStorageAdapter<Size>::template type>;
+};
+
+template <size_t Size>
+struct _helper_CArray<bool, Size> {
+    // To account for the optimization on bool arrays
+    using type = Array<T, StaticLinearStorageAdapter<(Size + 7 / 8)>::template type>;
+};
+
+}
+#pragma endregion CArray impl
+
 template <typename T, size_t Size>
 using CArray = Array<T, StaticLinearStorageAdapter<Size>::template type>;
 
