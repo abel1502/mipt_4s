@@ -102,6 +102,9 @@ public:
     DynamicLinearStorage &operator=(const DynamicLinearStorage &other) noexcept {
         static_assert(std::is_copy_constructible_v<T>);
 
+        if (&other == this)
+            return;
+
         // TODO: Could be optimized, but who cares, really...
         clear();
 
@@ -121,6 +124,9 @@ public:
     }
 
     DynamicLinearStorage &operator=(DynamicLinearStorage &&other) noexcept {
+        if (&other == this)
+            return;
+
         std::swap(data_    , other.data_    );
         std::swap(size_    , other.size_    );
         std::swap(capacity_, other.capacity_);
@@ -282,6 +288,9 @@ public:
     StaticLinearStorage &operator=(StaticLinearStorage &&other)
         noexcept(std::swappable<T>) {
 
+        if (&other == this)
+            return;
+
         [&]<size_t ... Ns>(std::index_sequence<Ns...>) {
             (std::swap(data_[Ns], other.data_[Ns]), ...);
         }(std::make_index_sequence<Size>());
@@ -384,6 +393,9 @@ public:
     DynamicChunkedStorage &operator=(const DynamicChunkedStorage &other) noexcept {
         static_assert(std::is_copy_constructible_v<T>);
 
+        if (&other == this)
+            return;
+
         // TODO: Could be optimized, but who cares, really...
         clear();
 
@@ -400,6 +412,9 @@ public:
     }
 
     DynamicChunkedStorage &operator=(DynamicChunkedStorage &&other) noexcept {
+        if (&other == this)
+            return;
+
         std::swap(chunks_      , other.chunks_      );
         std::swap(last_size_   , other.last_size_   );
         std::swap(default_item_, other.default_item_);
