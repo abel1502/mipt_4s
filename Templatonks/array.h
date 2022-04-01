@@ -135,6 +135,79 @@ public:
         }
     }
 
+    #pragma region Arithmetics
+    #define ELEMENTWISE_OP_(OP)                                                     \
+        template <typename OtherT, template <typename T> OtherStorage>              \
+        requires (std::convertible_to<OtherT, value_type> &&                        \
+                  (storage_type::is_dynamic || OtherStorage<OtherT>::is_dynamic ||  \
+                   storage_type::size() == OtherStorage<OtherT>::size()))           \
+        Array &operator OP##=(const Array<OtherT, OtherStorage> &other) {           \
+            sz = size();                                                            \
+                                                                                    \
+            if constexpr (storage_type::is_dynamic ||                               \
+                          other::storage_type::is_dynamic) {                        \
+                if (sz != other.size()) {                                           \
+                    throw std::length_error("Argument size mismatch");              \
+                }                                                                   \
+            }                                                                       \
+                                                                                    \
+            for (size_t idx = 0; idx < sz; ++idx) {                                 \
+                (*this)[idx] OP##= other[idx];                                      \
+            }                                                                       \
+                                                                                    \
+            return *this;                                                           \
+        }                                                                           \
+                                                                                    \
+        template <typename OtherT, template <typename T> OtherStorage>              \
+        Array operator OP(const Array<OtherT, OtherStorage> &other) const & {       \
+            Array result = *this;                                                   \
+                                                                                    \
+            return self OP##= other;                                                \
+        }                                                                           \
+                                                                                    \
+        template <typename OtherT, template <typename T> OtherStorage>              \
+        Array &&operator OP(const Array<OtherT, OtherStorage> &other) && {          \
+            *this OP##= other;                                                      \
+                                                                                    \
+            return std::move(*this);                                                \
+        }
+
+    ELEMENTWISE_OP_(+)
+    ELEMENTWISE_OP_(-)
+    ELEMENTWISE_OP_(/)
+    ELEMENTWISE_OP_(*)
+    ELEMENTWISE_OP_(%)
+
+    #undef ELEMENTWISE_OP_
+
+    template <typename OtherT, template <typename T> OtherStorage>
+    requires (std::convertible_to<OtherT, value_type> &&
+                (storage_type::is_dynamic || OtherStorage<OtherT>::is_dynamic ||
+                storage_type::size() == OtherStorage<OtherT>::size()))
+    value_type dot(const Array<OtherT, OtherStorage> &other) const {
+        sz = size();
+
+        if constexpr (storage_type::is_dynamic || other::storage_type::is_dynamic) {
+            if (sz != other.size()) {
+                throw std::length_error("Argument size mismatch");
+            }
+        }
+
+        // Workaround for non-default-constructible types
+        if (sz == 0) {
+            return value_type{};
+        }
+
+        value_type result{(*this)[0] * other[0]};
+
+        for (size_t idx = 1; idx < sz; ++idx) {
+            result += (*this)[idx] * other[idx]
+        }
+
+        return *this;
+    }
+    #pragma endregion Arithmetics
+
 protected:
     storage_type storage;
 
