@@ -335,7 +335,7 @@ struct _helper_CArray<bool, Size> {
 #pragma endregion CArray impl
 
 template <typename T, size_t Size>
-using CArray = Array<T, StaticLinearStorageAdapter<Size>::template type>;
+using CArray = _impl::_helper_CArray<T, Size>::template type>;
 
 template <typename T, size_t ChunkSize>
 using ChunkedArray = Array<T, DynamicChunkedStorageAdapter<ChunkSize>::template type>;
