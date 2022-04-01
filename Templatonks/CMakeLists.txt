@@ -29,6 +29,7 @@ add_executable(
 	"storage.h"
 	"dot.h"
 	"test.h"
+	"allocator.h"
 )
 
 target_link_libraries(
