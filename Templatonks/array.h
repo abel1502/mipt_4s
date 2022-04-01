@@ -137,35 +137,35 @@ public:
 
     #pragma region Arithmetics
     #define ELEMENTWISE_OP_(OP)                                                     \
-        template <typename OtherT, template <typename T> OtherStorage>              \
+        template <typename OtherT, template <typename T> typename OtherStorage>     \
         requires (std::convertible_to<OtherT, value_type> &&                        \
                   (storage_type::is_dynamic || OtherStorage<OtherT>::is_dynamic ||  \
                    storage_type::size() == OtherStorage<OtherT>::size()))           \
         Array &operator OP##=(const Array<OtherT, OtherStorage> &other) {           \
-            sz = size();                                                            \
+            size_type sz = size();                                                  \
                                                                                     \
             if constexpr (storage_type::is_dynamic ||                               \
-                          other::storage_type::is_dynamic) {                        \
+                          other.storage_type::is_dynamic) {                         \
                 if (sz != other.size()) {                                           \
                     throw std::length_error("Argument size mismatch");              \
                 }                                                                   \
             }                                                                       \
                                                                                     \
-            for (size_t idx = 0; idx < sz; ++idx) {                                 \
+            for (size_type idx = 0; idx < sz; ++idx) {                              \
                 (*this)[idx] OP##= other[idx];                                      \
             }                                                                       \
                                                                                     \
             return *this;                                                           \
         }                                                                           \
                                                                                     \
-        template <typename OtherT, template <typename T> OtherStorage>              \
+        template <typename OtherT, template <typename T> typename OtherStorage>     \
         Array operator OP(const Array<OtherT, OtherStorage> &other) const & {       \
             Array result = *this;                                                   \
                                                                                     \
-            return self OP##= other;                                                \
+            return result OP##= other;                                              \
         }                                                                           \
                                                                                     \
-        template <typename OtherT, template <typename T> OtherStorage>              \
+        template <typename OtherT, template <typename T> typename OtherStorage>     \
         Array &&operator OP(const Array<OtherT, OtherStorage> &other) && {          \
             *this OP##= other;                                                      \
                                                                                     \
@@ -180,14 +180,14 @@ public:
 
     #undef ELEMENTWISE_OP_
 
-    template <typename OtherT, template <typename T> OtherStorage>
+    template <typename OtherT, template <typename T> typename OtherStorage>
     requires (std::convertible_to<OtherT, value_type> &&
                 (storage_type::is_dynamic || OtherStorage<OtherT>::is_dynamic ||
                 storage_type::size() == OtherStorage<OtherT>::size()))
     value_type dot(const Array<OtherT, OtherStorage> &other) const {
-        sz = size();
+        size_type sz = size();
 
-        if constexpr (storage_type::is_dynamic || other::storage_type::is_dynamic) {
+        if constexpr (storage_type::is_dynamic || other.storage_type::is_dynamic) {
             if (sz != other.size()) {
                 throw std::length_error("Argument size mismatch");
             }
@@ -200,8 +200,8 @@ public:
 
         value_type result{(*this)[0] * other[0]};
 
-        for (size_t idx = 1; idx < sz; ++idx) {
-            result += (*this)[idx] * other[idx]
+        for (size_type idx = 1; idx < sz; ++idx) {
+            result += (*this)[idx] * other[idx];
         }
 
         return *this;
@@ -413,14 +413,14 @@ struct _helper_CArray {
 template <size_t Size>
 struct _helper_CArray<bool, Size> {
     // To account for the optimization on bool arrays
-    using type = Array<T, StaticLinearStorageAdapter<(Size + 7 / 8)>::template type>;
+    using type = Array<bool, StaticLinearStorageAdapter<(Size + 7 / 8)>::template type>;
 };
 
 }
 #pragma endregion CArray impl
 
 template <typename T, size_t Size>
-using CArray = _impl::_helper_CArray<T, Size>::template type>;
+using CArray = typename _impl::_helper_CArray<T, Size>::type;
 
 template <typename T, size_t ChunkSize>
 using ChunkedArray = Array<T, DynamicChunkedStorageAdapter<ChunkSize>::template type>;

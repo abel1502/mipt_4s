@@ -264,7 +264,7 @@ public:
             throw std::length_error("Too many values in initializer list");
         }
 
-        for (unsigned i = 0; i < values.size(); ++i) {
+        for (size_t i = 0; i < values.size(); ++i) {
             data_[i] = std::data(values)[i];
         }
     }
