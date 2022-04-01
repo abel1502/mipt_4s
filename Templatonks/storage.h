@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <initializer_list>
 #include <optional>
+#include <new>
 
 
 namespace mylib {
@@ -138,15 +139,13 @@ public:
     }
 
     T &item(size_t idx) {
-        if (idx >= size_) {
-            throw std::out_of_range("Index too large");
-        }
+        assert(idx < size_);
 
         return data_[idx];
     }
 
     inline const T &item(size_t idx) const {
-        return const_cast<DynamicLinearStorage *>(this)->data_(idx);
+        return const_cast<DynamicLinearStorage *>(this)->item(idx);
     }
 
     T *expand_one() {
@@ -156,9 +155,7 @@ public:
     }
 
     void remove_one() {
-        if (size_ == 0) {
-            throw std::overflow_error("Cannot remove from empty storage");
-        }
+        assert(size_ > 0);
 
         data_[--size_].~T();
     }
@@ -301,19 +298,13 @@ public:
     ~StaticLinearStorage() = default;
 
     constexpr T &item(size_t idx) {
-        if (idx >= size()) {
-            throw std::out_of_range("Index too large");
-        }
+        assert(idx < size());
 
         return data_[idx];
     }
 
     constexpr const T &item(size_t idx) const {
-        if (idx >= size()) {
-            throw std::out_of_range("Index too large");
-        }
-
-        return data_[idx];
+        return const_cast<StaticLinearStorage *>(this)->item(idx);
     }
 
     static constexpr size_t size() noexcept {
@@ -425,9 +416,7 @@ public:
     }
 
     T &item(size_t idx) {
-        if (idx >= size()) {
-            throw std::out_of_range("Index too large");
-        }
+        assert(idx < size());
 
         ensure_chunk_for(idx);
 
@@ -435,7 +424,7 @@ public:
     }
 
     inline const T &item(size_t idx) const {
-        return const_cast<DynamicLinearStorage *>(this)->data_(idx);
+        return const_cast<DynamicChunkedStorage *>(this)->item(idx);
     }
 
     T *expand_one() {
@@ -452,9 +441,7 @@ public:
     }
 
     void remove_one() {
-        if (size() == 0) {
-            throw std::overflow_error("Cannot remove from empty storage");
-        }
+        assert(size() > 0);
 
         if (last_size_ == 0) {
             clear_chunk(chunks_.size() - 1);

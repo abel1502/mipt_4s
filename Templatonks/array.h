@@ -3,7 +3,6 @@
 #include <ACL/general.h>
 #include <ACL/type_traits.h>
 #include <concepts>
-#include <new>
 #include "storage.h"
 
 
@@ -46,7 +45,9 @@ public:
     constexpr reference operator[](difference_type idx) {
         size_type sz = size();
 
-        REQUIRE(-(difference_type)sz <= idx && idx < (difference_type)sz);
+        if (!(-(difference_type)sz <= idx && idx < (difference_type)sz)) {
+            throw std::out_of_range("Index out of range");
+        }
 
         return storage.item((idx + sz) % sz);
     }
@@ -76,6 +77,10 @@ public:
 
     void pop_back() {
         static_assert(storage.is_dynamic);
+
+        if (size() == 0) {
+            throw std::overflow_error("Cannot remove from empty container");
+        }
 
         storage.remove_one();
     }
@@ -196,7 +201,9 @@ public:
     constexpr reference operator[](difference_type idx) {
         size_type sz = size();
 
-        REQUIRE(-(difference_type)sz <= idx && idx < (difference_type)sz);
+        if (!(-(difference_type)sz <= idx && idx < (difference_type)sz)) {
+            throw std::out_of_range("Index out of range");
+        }
 
         size_type phys_idx = (idx + sz) % sz;
 
@@ -230,6 +237,10 @@ public:
         static_assert(storage.is_dynamic);
 
         if (bits_last == 0) {
+            if (size() == 0) {
+                throw std::overflow_error("Cannot remove from empty container");
+            }
+
             storage.remove_one();
             bits_last = 8;
         }
