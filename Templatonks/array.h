@@ -3,6 +3,7 @@
 #include <ACL/general.h>
 #include <ACL/type_traits.h>
 #include <concepts>
+#include <memory>
 #include "storage.h"
 
 
@@ -62,7 +63,7 @@ public:
         value_type *cell = storage.expand_one();
         assert(cell);
 
-        new (cell) value_type(FWD(value));
+        std::construct_at(cell, FWD(value));
     }
 
     template <typename ... As>
@@ -72,7 +73,7 @@ public:
         value_type *cell = storage.expand_one();
         assert(cell);
 
-        new (cell) value_type(std::forward<As>(args)...);
+        std::construct_at(cell, std::forward<As>(args)...);
     }
 
     void pop_back() {
