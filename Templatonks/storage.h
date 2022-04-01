@@ -167,7 +167,7 @@ public:
 
         size_ = 0;
         capacity_ = 0;
-        free(data_);
+        ::operator delete[](data_);
         data_ = nullptr;
     }
 
@@ -191,12 +191,7 @@ protected:
             assert(capacity_ == 0);
 
             capacity_ = std::max(desired, DEFAULT_CAPACITY);
-            data_ = (T *)calloc(capacity_, sizeof(T));
-
-            if (!data_) {
-                capacity_ = 0;
-                throw std::bad_alloc();
-            }
+            data_ = (T *)::operator new[](capacity_* sizeof(T));
 
             return;
         }
@@ -210,10 +205,7 @@ protected:
             new_capacity *= 2;
         }
 
-        T *new_data = (T *)calloc(new_capacity, sizeof(T));
-        if (!new_data) {
-            throw std::bad_alloc();
-        }
+        T *new_data = (T *)::operator new[](new_capacity * sizeof(T));
 
         assert(new_capacity >= size_);
 
@@ -240,7 +232,7 @@ protected:
             data_[i].~T();
         }
 
-        free(data_);
+        ::operator delete[](data_);
         data_ = new_data;
         capacity_ = new_capacity;
     }
@@ -516,7 +508,7 @@ protected:
             cur_chunk[i].~T();
         }
 
-        free(cur_chunk);
+        ::operator delete[](cur_chunk);
 
         chunks_.item(idx) = nullptr;
     }
@@ -536,10 +528,7 @@ protected:
         assert(( haveTemplate && std::is_copy_constructible_v   <T>) ||
                (!haveTemplate && std::is_default_constructible_v<T>));
 
-        cur_chunk = (T *)calloc(chunk_size, sizeof(T));
-        if (!cur_chunk) {
-            throw std::bad_alloc();
-        }
+        cur_chunk = (T *)::operator new[](chunk_size * sizeof(T));
         chunks_.item(cur_chunk_idx) = cur_chunk;
 
         size_t cur_chunk_size = get_chunk_size(cur_chunk_idx);
