@@ -261,7 +261,7 @@ public:
         data_{} {
 
         if (values.size() > size()) {
-            throw std::overflow_error("Too many values in initializer list");
+            throw std::length_error("Too many values in initializer list");
         }
 
         for (unsigned i = 0; i < values.size(); ++i) {
