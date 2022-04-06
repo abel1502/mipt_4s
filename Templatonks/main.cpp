@@ -18,10 +18,18 @@ int main() {
     }
 
     {
-        mylib::CArray<int, 5> arr{1, 2, 3, 4, 5};
+        mylib::CArray<int, 5> arr{1, 5, 4, 7, 2};
         mylib::CArray<int, arr.size()> arr2 = arr;
 
-        DBG("arr2[3] == %d", arr2[3]);
+        for (const auto &val : arr2) {
+            DBG("arr2[.] == %d", val);
+        }
+
+        std::sort(arr2.begin(), arr2.end());
+
+        for (const auto &val : arr2) {
+            DBG("arr2[.] == %d", val);
+        }
     }
 
     {
@@ -58,8 +66,8 @@ int main() {
             DBG("Pushing %d", val);
         }
 
-        for (unsigned i = 0; i < arr.size(); ++i) {
-            DBG("arr[%u] = %d", i, arr[i]);
+        for (const auto &val : arr) {
+            DBG("arr[.] = %d", val);
         }
 
         while (!arr.empty()) {

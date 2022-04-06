@@ -24,10 +24,11 @@ concept Storage = ((requires (std::remove_cvref_t<St> storage,
     { const_storage.item(idx) } -> std::convertible_to<const T &>;
     { const_storage.size() } -> std::unsigned_integral;
     { St::is_dynamic } -> std::convertible_to<bool>;
+    { St::provides_iterators } -> std::convertible_to<bool>;
 }) && (!St::is_dynamic ||
-      requires (std::remove_cvref_t<St> storage,
-                const std::remove_cvref_t<St> const_storage,
-                T item, size_t idx) {
+       requires (std::remove_cvref_t<St> storage,
+                 const std::remove_cvref_t<St> const_storage,
+                 T item, size_t idx) {
     // Dynamic requirements
     St{(size_t)1};
     St{(size_t)1, (const T &)item};
@@ -35,16 +36,47 @@ concept Storage = ((requires (std::remove_cvref_t<St> storage,
     storage.remove_one();
     storage.clear();
 }) && (St::is_dynamic ||
-      requires (std::remove_cvref_t<St> storage,
-                const std::remove_cvref_t<St> const_storage,
-                T item, size_t idx) {
+       requires (std::remove_cvref_t<St> storage,
+                 const std::remove_cvref_t<St> const_storage,
+                 T item, size_t idx) {
     // Static requirements
     // (Mostly just ensuring constexpr-ness)
     std::bool_constant<(St::size(), true)>();
     // std::bool_constant<(std::declval<const St>().item(1), true)>();
     // std::bool_constant<(std::declval<const St>().item(1) = std::move(std::declval<T>()), true)>();
+}) && (!St::provides_iterators ||
+       requires (      std::remove_cvref_t<St> storage,
+                 const std::remove_cvref_t<St> const_storage) {
+
+    requires std:: input_iterator<typename St::iterator> &&
+             std::output_iterator<typename St::iterator, T>;
+    requires std:: input_iterator<typename St::const_iterator>;
+
+    { storage.begin() } -> std::convertible_to<typename St::iterator>;
+    { const_storage.begin() } -> std::convertible_to<typename St::const_iterator>;
+
+    { storage.end() } -> std::sentinel_for<typename St::iterator>;
+    { const_storage.end() } -> std::sentinel_for<typename St::const_iterator>;
+
+    // Maybe something else?
 }));
 #pragma endregion Storage concept
+
+
+#pragma region StorageIterHelper
+template <typename T, typename FallbackIter, typename FallbackConstIter>
+struct StorageIterHelper {
+    using iterator = FallbackIter;
+    using const_iterator = FallbackConstIter;
+};
+
+template <typename T, typename FallbackIter, typename FallbackConstIter>
+requires (T::provides_iterators)
+struct StorageIterHelper<T, FallbackIter, FallbackConstIter> {
+    using iterator = typename T::iterator;
+    using const_iterator = typename T::const_iterator;
+};
+#pragma endregion StorageIterHelper
 
 
 #pragma region DynamicLinearStorage
@@ -56,6 +88,10 @@ protected:
 
 public:
     static constexpr bool is_dynamic = true;
+    static constexpr bool provides_iterators = true;
+
+    using iterator = T *;
+    using const_iterator = const T *;
 
 
     DynamicLinearStorage() = default;
@@ -147,6 +183,12 @@ public:
     inline const T &item(size_t idx) const {
         return const_cast<DynamicLinearStorage *>(this)->item(idx);
     }
+
+    inline       iterator begin()       { return data_; }
+    inline const_iterator begin() const { return data_; }
+    inline       iterator end()       { return data_ + size(); }
+    inline const_iterator end() const { return data_ + size(); }
+
 
     T *expand_one() {
         ensure_capacity(size_ + 1);
@@ -246,6 +288,10 @@ template <typename T, size_t Size>
 class StaticLinearStorage {
 public:
     static constexpr bool is_dynamic = false;
+    static constexpr bool provides_iterators = true;
+
+    using iterator = T *;
+    using const_iterator = const T *;
 
 
     StaticLinearStorage() :
@@ -303,6 +349,11 @@ public:
         return Size;
     }
 
+    inline       iterator begin()       { return data_; }
+    inline const_iterator begin() const { return data_; }
+    inline       iterator end()       { return data_ + size(); }
+    inline const_iterator end() const { return data_ + size(); }
+
 protected:
     T data_[Size];
 
@@ -334,6 +385,7 @@ class DynamicChunkedStorage {
 
 public:
     static constexpr bool is_dynamic = true;
+    static constexpr bool provides_iterators = false;
 
 
     DynamicChunkedStorage() :

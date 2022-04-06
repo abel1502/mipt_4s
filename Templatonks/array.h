@@ -3,6 +3,7 @@
 #include <ACL/general.h>
 #include <ACL/type_traits.h>
 #include <concepts>
+#include <iterator>
 #include <memory>
 #include "storage.h"
 
@@ -11,6 +12,163 @@ namespace mylib {
 
 
 #pragma region Array
+#pragma region Iterators
+namespace _impl {
+template <typename Arr, typename T>
+class ArrayIterator {
+    friend Arr;
+
+    using size_type = typename Arr::size_type;
+public:
+    using value_type = T;
+
+    static_assert(std::is_same_v<value_type,       typename Arr::value_type> ||
+                  std::is_same_v<value_type, const typename Arr::value_type>);
+
+    static constexpr bool is_const = std::is_same_v<value_type, const typename Arr::value_type>;
+
+    using difference_type = typename Arr::difference_type;
+    using pointer = std::conditional_t<is_const, typename Arr::const_pointer, typename Arr::pointer>;
+    using reference = std::conditional_t<is_const, typename Arr::const_reference, typename Arr::reference>;
+    // using iterator_concept = std::random_access_iterator;
+    using iterator_category = std::random_access_iterator_tag;
+
+
+    /// DO NOT attmpt to use the obtained iterator
+    constexpr ArrayIterator() :
+        array{nullptr}, idx{-42} {}
+
+protected:
+    constexpr ArrayIterator(Arr *array, size_type idx) :
+        array{array}, idx{idx} {}
+
+public:
+
+    constexpr ArrayIterator(const ArrayIterator &other) = default;
+    constexpr ArrayIterator &operator=(const ArrayIterator &other) = default;
+    constexpr ArrayIterator(ArrayIterator &&other) = default;
+    constexpr ArrayIterator &operator=(ArrayIterator &&other) = default;
+
+    constexpr ArrayIterator &operator++() {
+        assert(array);
+
+        ++idx;
+
+        // == is okay for past-the-end iterators
+        assert(idx <= array->size());
+
+        return *this;
+    }
+
+    constexpr ArrayIterator &operator--() {
+        assert(array);
+
+        --idx;
+
+        assert(idx <= array->size());
+
+        return *this;
+    }
+
+    constexpr ArrayIterator operator++(int) {
+        auto cp = *this;
+
+        ++*this;
+
+        return cp;
+    }
+
+    constexpr ArrayIterator operator--(int) {
+        auto cp = *this;
+
+        --*this;
+
+        return cp;
+    }
+
+    constexpr  ArrayIterator &operator+=(difference_type delta) {
+        assert(array);
+
+        idx += delta;
+
+        assert(idx <= array->size());
+
+        return *this;
+    }
+
+    constexpr ArrayIterator &operator-=(difference_type delta) {
+        assert(array);
+
+        idx -= delta;
+
+        assert(idx <= array->size());
+
+        return *this;
+    }
+
+    constexpr friend ArrayIterator operator+(ArrayIterator self, difference_type delta) {
+        self += delta;
+
+        return self;
+    }
+
+    constexpr friend ArrayIterator operator+(difference_type delta, ArrayIterator self) {
+        self += delta;
+
+        return self;
+    }
+
+    constexpr friend ArrayIterator operator-(ArrayIterator self, difference_type delta) {
+        self -= delta;
+
+        return self;
+    }
+
+    constexpr difference_type operator-(const ArrayIterator &other) const {
+        assert(array && other.array);
+        assert(array == other.array);
+
+        return idx - other.idx;
+    }
+
+    constexpr reference operator*() const {
+        assert(array);
+
+        return (*array)[idx];
+    }
+
+    constexpr pointer operator->() const {
+        assert(array);
+
+        return &(*array)[idx];
+    }
+
+    constexpr reference operator[](difference_type delta) const {
+        return (*array)[idx + delta];
+    }
+
+    constexpr bool operator==(const ArrayIterator &other) const = default;
+    constexpr bool operator!=(const ArrayIterator &other) const = default;
+    constexpr bool operator< (const ArrayIterator &other) const = default;
+    constexpr bool operator<=(const ArrayIterator &other) const = default;
+    constexpr bool operator> (const ArrayIterator &other) const = default;
+    constexpr bool operator>=(const ArrayIterator &other) const = default;
+
+    constexpr auto operator<=>(const ArrayIterator &other) const {
+        assert(array && other.array);
+        assert(array == other.array);
+
+        return idx <=> other.idx;
+    }
+
+protected:
+    Arr *array;
+    size_type idx;
+
+};
+}
+#pragma endregion Iterators
+
 template <typename T_, template <typename T> typename Storage_>
 requires (!std::is_reference_v<T_> &&
           Storage<Storage_<T_>, T_>)
@@ -19,6 +177,8 @@ public:
     using value_type = T_;
     using reference = value_type &;
     using const_reference = const value_type &;
+    using pointer = value_type *;
+    using const_pointer = const value_type *;
     using size_type = size_t;
     using difference_type = ptrdiff_t;
 
@@ -26,8 +186,19 @@ public:
 protected:
     using storage_type = Storage_<value_type>;
 
+    using fallback_iter = _impl::ArrayIterator<Array, value_type>;
+    using fallback_const_iter = _impl::ArrayIterator<const Array, const value_type>;
+
+    static_assert(std::random_access_iterator<fallback_iter>);
+    static_assert(std::random_access_iterator<fallback_const_iter>);
+
+    using storage_iter_helper = StorageIterHelper<storage_type, fallback_iter, fallback_const_iter>;
+
 public:
     #pragma endregion Protected helpers
+
+    using       iterator = storage_iter_helper::      iterator;
+    using const_iterator = storage_iter_helper::const_iterator;
 
     Array() : storage() {}
 
@@ -53,8 +224,40 @@ public:
         return storage.item((idx + sz) % sz);
     }
 
-    constexpr inline const_reference operator[](size_type idx) const {
+    constexpr inline const_reference operator[](difference_type idx) const {
         return (*const_cast<Array *>(this))[idx];
+    }
+
+    iterator begin() {
+        if constexpr (storage_type::provides_iterators) {
+            return storage.begin();
+        } else {
+            return iterator(this, 0);
+        }
+    }
+
+    const_iterator begin() const {
+        if constexpr (storage_type::provides_iterators) {
+            return storage.begin();
+        } else {
+            return const_iterator(this, 0);
+        }
+    }
+
+    auto end() {
+        if constexpr (storage_type::provides_iterators) {
+            return storage.end();
+        } else {
+            return iterator(this, size());
+        }
+    }
+
+    auto end() const {
+        if constexpr (storage_type::provides_iterators) {
+            return storage.end();
+        } else {
+            return const_iterator(this, size());
+        }
     }
 
     void push_back(abel::universal_ref<value_type> auto &&value) {
@@ -237,6 +440,9 @@ public:
     using const_reference = value_type;  // Intentionally
     using size_type = Base::size_type;
     using difference_type = Base::difference_type;
+    using iterator = _impl::ArrayIterator<Array, value_type>;
+    using const_iterator = _impl::ArrayIterator<const Array, const value_type>;
+
 
     Array() : Base() {}
 
@@ -286,8 +492,24 @@ public:
         return ReferenceProxy(byte, (uint8_t)(phys_idx % 8));
     }
 
-    constexpr inline const_reference operator[](size_type idx) const {
+    constexpr inline const_reference operator[](difference_type idx) const {
         return (*const_cast<Array *>(this))[idx];
+    }
+
+    iterator begin() {
+        return iterator(this, 0);
+    }
+
+    const_iterator begin() const {
+        return const_iterator(this, 0);
+    }
+
+    iterator end() {
+        return iterator(this, size());
+    }
+
+    const_iterator end() const {
+        return const_iterator(this, size());
     }
 
     void push_back(value_type value) {
