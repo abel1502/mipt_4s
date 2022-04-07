@@ -444,6 +444,8 @@ class Array<bool, Storage_> : protected Array<unsigned char, Storage_> {
 protected:
     using Base = Array<unsigned char, Storage_>;
     class ReferenceProxy;
+    template <typename RefP>
+    class PointerProxy;
 
     static constexpr size_t _bytes_ceil (size_t bits) { return (bits + 7) >> 3; }
     static constexpr size_t _bytes_floor(size_t bits) { return (bits    ) >> 3; }
@@ -456,6 +458,8 @@ public:
     using value_type = bool;
     using reference = ReferenceProxy;
     using const_reference = value_type;  // Intentionally
+    using pointer = PointerProxy<reference>;  // TODO: Might not work
+    using const_pointer = PointerProxy<const_reference>;  // TODO: Same
     using size_type = Base::size_type;
     using difference_type = Base::difference_type;
     using iterator = _impl::ArrayIterator<Array, value_type>;
@@ -464,7 +468,7 @@ public:
     using const_reverse_iterator = std::reverse_iterator<const_iterator>;
 
 
-    Array() : Base() {}
+    Array() : Base(1) {}
 
     Array(size_type size) : Base(_bytes_floor(size) + 1), bits_last{size % 8} {}
 
@@ -651,6 +655,24 @@ protected:
 
     };
     #pragma endregion ReferenceProxy
+
+    #pragma region PointerProxy
+    template <typename RefP>
+    class PointerProxy {
+    public:
+        PointerProxy(RefP *refp) :
+            ref{*refp} {}
+
+        RefP operator*() const {
+            return ref;
+        }
+
+        // TODO: operator->?
+
+    protected:
+        RefP ref;
+    };
+    #pragma endregion PointerProxy
 
 };
 #pragma endregion Array<bool>
