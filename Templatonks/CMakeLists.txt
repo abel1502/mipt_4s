@@ -14,9 +14,15 @@ set(CMAKE_CXX_FLAGS "${CXX_WARNING_FLAGS} ${CXX_OPTIMIZE_FLAGS} -EHsc")
 
 
 add_library(ACL STATIC IMPORTED)
-set(ACL_DIR  "${PROJECT_SOURCE_DIR}/../../ACL/")
+set(ACL_DIR "${PROJECT_SOURCE_DIR}/../../ACL/")
+if (CMAKE_BUILD_TYPE STREQUAL "Debug")
+	set(ACL_BUILD_TYPE "x64/Debug")
+else ()
+	set(ACL_BUILD_TYPE "x64/Release")
+endif ()
+
 set_target_properties(ACL PROPERTIES
-	IMPORTED_LOCATION "${ACL_DIR}/lib/x64/Release/ACL.lib"
+	IMPORTED_LOCATION "${ACL_DIR}/lib/${ACL_BUILD_TYPE}/ACL.lib"
 	INTERFACE_INCLUDE_DIRECTORIES "${ACL_DIR}/include/"
 )
 
