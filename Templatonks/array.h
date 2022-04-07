@@ -199,6 +199,8 @@ public:
 
     using       iterator = storage_iter_helper::      iterator;
     using const_iterator = storage_iter_helper::const_iterator;
+    using reverse_iterator = std::reverse_iterator<iterator>;
+    using const_reverse_iterator = std::reverse_iterator<const_iterator>;
 
     Array() : storage() {}
 
@@ -258,6 +260,22 @@ public:
         } else {
             return const_iterator(this, size());
         }
+    }
+
+    reverse_iterator rbegin() {
+        return std::make_reverse_iterator(begin());
+    }
+
+    const_reverse_iterator rbegin() const {
+        return std::make_reverse_iterator(begin());
+    }
+
+    reverse_iterator rend() {
+        return rbegin() + size();
+    }
+
+    const_reverse_iterator rend() const {
+        return rbegin() + size();
     }
 
     void push_back(abel::universal_ref<value_type> auto &&value) {
@@ -442,6 +460,8 @@ public:
     using difference_type = Base::difference_type;
     using iterator = _impl::ArrayIterator<Array, value_type>;
     using const_iterator = _impl::ArrayIterator<const Array, const value_type>;
+    using reverse_iterator = std::reverse_iterator<iterator>;
+    using const_reverse_iterator = std::reverse_iterator<const_iterator>;
 
 
     Array() : Base() {}
@@ -510,6 +530,22 @@ public:
 
     const_iterator end() const {
         return const_iterator(this, size());
+    }
+
+    reverse_iterator rbegin() {
+        return std::make_reverse_iterator(begin());
+    }
+
+    const_reverse_iterator rbegin() const {
+        return std::make_reverse_iterator(begin());
+    }
+
+    reverse_iterator rend() {
+        return rbegin() + size();
+    }
+
+    const_reverse_iterator rend() const {
+        return rbegin() + size();
     }
 
     void push_back(value_type value) {
