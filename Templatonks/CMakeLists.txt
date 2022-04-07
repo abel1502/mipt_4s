@@ -30,7 +30,8 @@ add_executable(
 	"dot.h"
 	"test.h"
 	"allocator.h"
-)
+	"test.cpp"
+ )
 
 target_link_libraries(
 	templatonks
