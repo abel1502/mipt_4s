@@ -457,7 +457,7 @@ protected:
 public:
     using value_type = bool;
     using reference = ReferenceProxy;
-    using const_reference = value_type;  // Intentionally
+    using const_reference = ReferenceProxy;  // Not value_type to account for future modifications
     using pointer = PointerProxy<reference>;  // TODO: Might not work
     using const_pointer = PointerProxy<const_reference>;  // TODO: Same
     using size_type = Base::size_type;
@@ -644,6 +644,11 @@ protected:
             *byte |=  (value << offset);
         }
 
+        inline ReferenceProxy(const ReferenceProxy &other) = default;
+        inline ReferenceProxy &operator=(const ReferenceProxy &other) = default;
+        inline ReferenceProxy(ReferenceProxy &&other) = default;
+        inline ReferenceProxy &operator=(ReferenceProxy &&other) = default;
+
     protected:
         uint8_t *byte;
         uint8_t offset;
@@ -708,3 +713,64 @@ using ChunkedArray = Array<T, DynamicChunkedStorageAdapter<ChunkSize>::template 
 
 
 }
+
+
+
+namespace std {
+
+#if 0
+template <template <typename T> typename Storage_>
+inline void swap(typename mylib::Array<bool, Storage_>::reference &&a,
+                 typename mylib::Array<bool, Storage_>::reference &&b) noexcept {
+    bool tmp = a;
+    a = b;
+    b = tmp;
+}
+#else
+// A workaround, presumably for msvc specifically
+inline void swap(mylib::Array<bool, mylib::DynamicLinearStorage>::reference a,
+                 mylib::Array<bool, mylib::DynamicLinearStorage>::reference b) noexcept {
+    bool tmp = a;
+    a = (bool)b;
+    b = tmp;
+}
+#endif
+
+template <typename Arr, typename T>
+requires (std::same_as<bool, std::remove_const_t<T>>)
+inline void iter_swap(mylib::_impl::ArrayIterator<Arr, T> a,
+                      mylib::_impl::ArrayIterator<Arr, T> b) {
+    std::swap(*a, *b);
+}
+
+using std::swap;
+
+template <typename Arr, typename T, typename Pr>
+requires (std::same_as<bool, std::remove_const_t<T>>)
+void sort(mylib::_impl::ArrayIterator<Arr, T> from,
+          mylib::_impl::ArrayIterator<Arr, T> to,
+          Pr pred) {
+    bool reversed = std::move(pred)(true, false);
+
+    unsigned sum = 0;
+    for (auto iter = from; iter != to; ++iter) {
+        sum += (unsigned)(reversed ^ !*iter);
+    }
+
+    for (; sum > 0; ++from, --sum) {
+        *from = reversed;
+    }
+    for (; from != to; ++from) {
+        *from = !reversed;
+    }
+}
+
+template <typename Arr, typename T>
+requires (std::same_as<bool, std::remove_const_t<T>>)
+void sort(mylib::_impl::ArrayIterator<Arr, T> from,
+          mylib::_impl::ArrayIterator<Arr, T> to) {
+    sort(std::move(from), std::move(to), std::less<>{});
+}
+
+}
+

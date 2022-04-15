@@ -7,7 +7,9 @@
 #include <source_location>
 #include <string_view>
 #include <format>
-#include <vector>
+#include <vector>  // For tests
+#include <limits>
+#include <string>  // For std::to_string
 #include "array.h"
 
 
@@ -104,8 +106,8 @@ protected:
     static struct {
         unsigned fail_cnt = 0;
     } global_stats;
-    
-    
+
+
     void header() const;
 
     void pass() const;
@@ -143,8 +145,8 @@ struct TestProxy {
     std::string_view name;
 
     Test operator=(TestCallback cb) {
-        return Test(std::move(cb.func), 
-                    std::move(name), 
+        return Test(std::move(cb.func),
+                    std::move(name),
                     std::move(cb.loc));
     }
 
@@ -157,7 +159,7 @@ struct TestProxy {
 
 #pragma region Literal
 namespace literals {
-constexpr auto operator ""_t(const char *str, size_t) {
+constexpr auto operator ""_test(const char *str, size_t) {
     return _impl::TestProxy(str);
 }
 }
@@ -184,7 +186,7 @@ inline void require(bool cond, const char *stmt = nullptr) {
 
 
 #pragma region Suite
-template <bool first_fail = false, 
+template <bool first_fail = false,
           std::common_reference_with<Test> ... As>
 void suite(const std::string_view &name, As &&...tests) {
     unsigned cnt_passed = 0;
@@ -238,7 +240,7 @@ public:
 
     static value_type random_val() {
         if constexpr (std::is_integral_v<value_type>) {
-            return (value_type)abel::randLL();
+            return (value_type)(abel::randLL() % (((size_t)std::numeric_limits<value_type>::max()) + 1));
         } else if constexpr (std::is_floating_point_v<value_type>) {
             return (value_type)abel::randDouble();
         } else {
@@ -259,7 +261,7 @@ public:
         } else {
             test_static();
         }
-        
+
         utest::Test::sum_up();
     }
 
@@ -267,7 +269,7 @@ protected:
     void test_common() {
         using namespace utest::literals;
 
-        // "fail"_t << [=]() {
+        // "fail"_test << [=]() {
         //     TEST_REQUIRE(false);
         // };
 
@@ -278,30 +280,30 @@ protected:
         using namespace utest::literals;
 
         utest::suite("size_empty",
-            "default"_t = [this]() {
+            "default"_test = [this]() {
                 array_type arr;
                 TEST_REQUIRE(arr.size() == 0);
             },
-            "initlist"_t = [this]() {
+            "initlist"_test = [this]() {
                 array_type arr{};
                 TEST_REQUIRE(arr.size() == 0);
             }
         );
 
         for (unsigned sz : {0, 1, 2, 7, 8, 9, 15, 16, 17, 10001}) {
-            utest::suite(std::format("size_{}", sz), 
-                "explicit_size"_t = [=]() {
+            utest::suite(std::format("size_{}", sz),
+                "explicit_size"_test = [=]() {
                     array_type arr(sz);
                     TEST_REQUIRE(arr.size() == sz);
                 },
-                "explicit_size_val"_t = [=]() {
+                "explicit_size_val"_test = [=]() {
                     array_type arr(sz, random_val());
                     TEST_REQUIRE(arr.size() == sz);
                 }
             );
         }
 
-        "access"_t << [=]() {
+        "access"_test << [=]() {
             const size_t test_size = 17;
 
             std::vector<value_type> items(test_size);
@@ -319,14 +321,38 @@ protected:
             }
         };
 
-        "iteration"_t << [=]() {
-            const size_t test_size = 17;
+        constexpr auto populate = [](const size_t test_size,
+                                     std::vector<value_type> &items,
+                                     array_type &arr) {
+            items.resize(test_size);
+            arr = array_type(test_size);
 
-            std::vector<value_type> items(test_size);
-            array_type arr(test_size);
             for (unsigned i = 0; i < test_size; ++i) {
                 arr[i] = items[i] = random_val();
             }
+        };
+
+        constexpr auto compare = [](const std::vector<value_type> &items,
+                                    const array_type &arr, bool dump = false) {
+            TEST_REQUIRE(arr.size() == items.size());
+
+            for (size_t i = 0; i < arr.size(); ++i) {
+                if (dump && arr[i] != items[i]) {
+                    utest::log("<%s> [%zu/%zu]: %s != %s\n",
+                               typeid(value_type).name(),
+                               i, arr.size(),
+                               std::to_string(arr[i]).c_str(),
+                               std::to_string(items[i]).c_str());
+                }
+                TEST_REQUIRE(arr[i] == items[i]);
+            }
+        };
+
+        "iteration"_test << [=]() {
+            const size_t test_size = 17;
+            std::vector<value_type> items;
+            array_type arr;
+            populate(test_size, items, arr);
 
             unsigned i = 0;
             for (const auto &elem : arr) {
@@ -335,7 +361,7 @@ protected:
             }
         };
 
-        "push_pop"_t << [=]() {
+        "push_pop"_test << [=]() {
             const size_t test_size = 17;
 
             std::vector<value_type> items{};
@@ -347,16 +373,8 @@ protected:
                 arr.push_back(val);
             }
 
-            TEST_REQUIRE(arr.size() == items.size());
+            compare(items, arr);
 
-            {
-                unsigned i = 0;
-                for (const auto &elem : arr) {
-                    TEST_REQUIRE(elem == items[i]);
-                    ++i;
-                }
-            }
-            
 
             for (unsigned i = 0; i < test_size; ++i) {
                 value_type val = items.back();
@@ -367,15 +385,76 @@ protected:
                 items.pop_back();
                 arr.pop_back();
             }
+
+            compare(items, arr);
         };
+
+        "swap"_test << [=]() {
+            const size_t test_size = 17;
+            std::vector<value_type> items;
+            array_type arr;
+            populate(test_size, items, arr);
+
+            std::swap(arr[0], arr[7]);
+            //std::iter_swap(arr.begin(), arr.begin() + 7);
+            // std, apparently, has no swap overload for these
+            value_type tmp = items[0];
+            items[0] = items[7];
+            items[7] = tmp;
+
+            compare(items, arr);
+        };
+
+        "sort"_test << [=]() {
+            const size_t test_size = 17;
+            std::vector<value_type> items;
+            array_type arr;
+            populate(test_size, items, arr);
+
+            #if 1
+            std::sort(items.begin(), items.end());
+            std::sort(arr.begin(), arr.end());
+            #else
+            std::copy(arr.begin(), arr.end(), items.begin());
+            #endif
+
+            compare(items, arr);
+        };
+
+        "copy"_test << [=]() {
+            const size_t test_size = 17;
+            std::vector<value_type> items;
+            array_type arr;
+            populate(test_size, items, arr);
+
+            items.clear();
+
+            std::copy(arr.begin(), arr.end(), std::back_inserter(items));
+
+            compare(items, arr);
+        };
+
+        "find"_test << [=]() {
+            const size_t test_size = 17;
+            std::vector<value_type> items;
+            array_type arr;
+            populate(test_size, items, arr);
+
+            for (unsigned i = 0; i < 500; ++i) {
+                value_type item = random_val();
+                TEST_REQUIRE(std::find(arr.begin(), arr.end(), item) - arr.begin() ==
+                             std::find(items.begin(), items.end(), item) - items.begin());
+            }
+        };
+
+        // TODO: Also perhaps std::transform?
     }
 
     void test_static() {
         using namespace utest::literals;
-        
+
         constexpr size_t static_size = Storage<T>::size();
 
-        static_assert(static_size > 2);
         //
     }
 

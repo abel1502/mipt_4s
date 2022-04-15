@@ -140,7 +140,7 @@ public:
         static_assert(std::is_copy_constructible_v<T>);
 
         if (&other == this)
-            return;
+            return *this;
 
         // TODO: Could be optimized, but who cares, really...
         clear();
@@ -150,6 +150,8 @@ public:
         for (; size < other.size; ++size) {
             new (&data_[size]) T(other.data_[size]);
         }
+
+        return *this;
     }
 
     DynamicLinearStorage(DynamicLinearStorage &&other) noexcept :
@@ -162,11 +164,13 @@ public:
 
     DynamicLinearStorage &operator=(DynamicLinearStorage &&other) noexcept {
         if (&other == this)
-            return;
+            return *this;
 
         std::swap(data_    , other.data_    );
         std::swap(size_    , other.size_    );
         std::swap(capacity_, other.capacity_);
+
+        return *this;
     }
 
     ~DynamicLinearStorage() noexcept {
@@ -324,7 +328,7 @@ public:
         noexcept(std::swappable<T>) {
 
         if (&other == this)
-            return;
+            return *this;
 
         [&]<size_t ... Ns>(std::index_sequence<Ns...>) {
             (std::swap(data_[Ns], other.data_[Ns]), ...);
@@ -429,7 +433,7 @@ public:
         static_assert(std::is_copy_constructible_v<T>);
 
         if (&other == this)
-            return;
+            return *this;
 
         // TODO: Could be optimized, but who cares, really...
         clear();
@@ -437,6 +441,8 @@ public:
         while (size < other.size) {
             new (expand_one()) T(other.item(size));
         }
+
+        return *this;
     }
 
     DynamicChunkedStorage(DynamicChunkedStorage &&other) noexcept :
@@ -448,11 +454,13 @@ public:
 
     DynamicChunkedStorage &operator=(DynamicChunkedStorage &&other) noexcept {
         if (&other == this)
-            return;
+            return *this;
 
         std::swap(chunks_      , other.chunks_      );
         std::swap(last_size_   , other.last_size_   );
         std::swap(default_item_, other.default_item_);
+
+        return *this;
     }
 
     ~DynamicChunkedStorage() noexcept {
