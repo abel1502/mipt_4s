@@ -301,7 +301,7 @@ public:
         static_assert(storage.is_dynamic);
 
         if (size() == 0) {
-            throw std::overflow_error("Cannot remove from empty container");
+            throw std::out_of_range("Cannot remove from empty container");
         }
 
         storage.remove_one();
