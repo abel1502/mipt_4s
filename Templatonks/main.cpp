@@ -7,12 +7,424 @@
 #include "test.h"
 
 
+#pragma region ArrayTester
+template <typename T>
+class ArrayTester;
+
+
+template <typename T, template <typename T> typename Storage>
+class ArrayTester<mylib::Array<T, Storage>> {
+public:
+    using array_type = mylib::Array<T, Storage>;
+    using value_type = array_type::value_type;
+    static constexpr bool is_dynamic = Storage<T>::is_dynamic;
+
+
+    static constexpr value_type default_val() {
+        return value_type{};
+    }
+
+    static value_type random_val() {
+        if constexpr (std::is_integral_v<value_type>) {
+            return (value_type)(abel::randLL() % (((size_t)std::numeric_limits<value_type>::max()) + 1));
+        } else if constexpr (std::is_floating_point_v<value_type>) {
+            return (value_type)abel::randDouble();
+        } else {
+            return default_val();
+        }
+    }
+
+
+    void test() {
+        utest::Test::reset();
+
+        utest::log("Testing %s\n", typeid(array_type).name());
+
+        test_common();
+
+        if constexpr (is_dynamic) {
+            test_dynamic();
+        } else {
+            test_static();
+        }
+
+        utest::Test::sum_up();
+    }
+
+protected:
+    void test_common() {
+        using namespace utest::literals;
+
+        // "fail"_test << [=]() {
+        //     TEST_REQUIRE(false);
+        // };
+
+        //
+    }
+
+    void test_dynamic() {
+        using namespace utest::literals;
+
+        utest::suite("size_empty",
+            "default"_test = [this]() {
+                array_type arr;
+                TEST_REQUIRE(arr.size() == 0);
+            },
+            "initlist"_test = [this]() {
+                array_type arr{};
+                TEST_REQUIRE(arr.size() == 0);
+            }
+        );
+
+        for (unsigned sz : {0, 1, 2, 7, 8, 9, 15, 16, 17, 10001}) {
+            utest::suite(std::format("size_{}", sz),
+                "explicit_size"_test = [=]() {
+                    array_type arr(sz);
+                    TEST_REQUIRE(arr.size() == sz);
+                },
+                "explicit_size_val"_test = [=]() {
+                    array_type arr(sz, random_val());
+                    TEST_REQUIRE(arr.size() == sz);
+                }
+            );
+        }
+
+        "access"_test << [=]() {
+            const size_t test_size = 17;
+
+            std::vector<value_type> items(test_size);
+            array_type arr(test_size);
+            for (unsigned i = 0; i < test_size; ++i) {
+                arr[i] = items[i] = random_val();
+            }
+
+            for (unsigned i = 0; i < test_size; ++i) {
+                TEST_REQUIRE(arr[i] == items[i]);
+            }
+
+            for (int i = 1; i <= (int)test_size; ++i) {
+                TEST_REQUIRE(arr[-i] == items[test_size - i]);
+            }
+        };
+
+        constexpr auto populate = [](const size_t test_size,
+                                     std::vector<value_type> &items,
+                                     array_type &arr) {
+            items.resize(test_size);
+            arr = array_type(test_size);
+
+            for (unsigned i = 0; i < test_size; ++i) {
+                arr[i] = items[i] = random_val();
+            }
+        };
+
+        constexpr auto compare = [](const std::vector<value_type> &items,
+                                    const array_type &arr, bool dump = false) {
+            TEST_REQUIRE(arr.size() == items.size());
+
+            for (size_t i = 0; i < arr.size(); ++i) {
+                if (dump && arr[i] != items[i]) {
+                    utest::log("<%s> [%zu/%zu]: %s != %s\n",
+                               typeid(value_type).name(),
+                               i, arr.size(),
+                               std::to_string(arr[i]).c_str(),
+                               std::to_string(items[i]).c_str());
+                }
+                TEST_REQUIRE(arr[i] == items[i]);
+            }
+        };
+
+        "iteration"_test << [=]() {
+            const size_t test_size = 17;
+            std::vector<value_type> items;
+            array_type arr;
+            populate(test_size, items, arr);
+
+            unsigned i = 0;
+            for (const auto &elem : arr) {
+                TEST_REQUIRE(elem == items[i]);
+                ++i;
+            }
+        };
+
+        "push_pop"_test << [=]() {
+            const size_t test_size = 17;
+
+            std::vector<value_type> items{};
+            array_type arr{};
+            for (unsigned i = 0; i < test_size; ++i) {
+                value_type val = random_val();
+
+                items.push_back(val);
+                arr.push_back(val);
+            }
+
+            compare(items, arr);
+
+
+            for (unsigned i = 0; i < test_size; ++i) {
+                value_type val = items.back();
+                value_type my_val = arr.back();
+
+                TEST_REQUIRE(val == my_val);
+
+                items.pop_back();
+                arr.pop_back();
+            }
+
+            compare(items, arr);
+        };
+
+        "swap"_test << [=]() {
+            const size_t test_size = 17;
+            std::vector<value_type> items;
+            array_type arr;
+            populate(test_size, items, arr);
+
+            std::swap(arr[0], arr[7]);
+            //std::iter_swap(arr.begin(), arr.begin() + 7);
+            // std, apparently, has no swap overload for these
+            value_type tmp = items[0];
+            items[0] = items[7];
+            items[7] = tmp;
+
+            compare(items, arr);
+        };
+
+        "sort"_test << [=]() {
+            const size_t test_size = 17;
+            std::vector<value_type> items;
+            array_type arr;
+            populate(test_size, items, arr);
+
+            #if 1
+            std::sort(items.begin(), items.end());
+            std::sort(arr.begin(), arr.end());
+            #else
+            std::copy(arr.begin(), arr.end(), items.begin());
+            #endif
+
+            compare(items, arr);
+        };
+
+        "copy"_test << [=]() {
+            const size_t test_size = 17;
+            std::vector<value_type> items;
+            array_type arr;
+            populate(test_size, items, arr);
+
+            items.clear();
+
+            std::copy(arr.begin(), arr.end(), std::back_inserter(items));
+
+            compare(items, arr);
+        };
+
+        "find"_test << [=]() {
+            const size_t test_size = 17;
+            std::vector<value_type> items;
+            array_type arr;
+            populate(test_size, items, arr);
+
+            for (unsigned i = 0; i < 500; ++i) {
+                value_type item = random_val();
+                TEST_REQUIRE(std::find(arr.begin(), arr.end(), item) - arr.begin() ==
+                             std::find(items.begin(), items.end(), item) - items.begin());
+            }
+        };
+
+        // TODO: Also perhaps std::transform?
+    }
+
+    void test_static() {
+        using namespace utest::literals;
+
+        constexpr size_t static_size = Storage<T>::size();
+
+        //
+    }
+
+};
+#pragma endregion ArrayTester
+
+
+#pragma region StringTester
+class StringTester {
+public:
+    using string_type = mylib::String<>;
+    using char_type = string_type::value_type;
+    static_assert(std::is_same_v<char_type, char>, "Tester not suitable for non-char strings");
+
+
+    void test() {
+        utest::Test::reset();
+
+        utest::log("Testing %s\n", typeid(string_type).name());
+
+        test_all();
+
+        utest::Test::sum_up();
+    }
+
+    void test_all() {
+        using namespace utest::literals;
+
+        "access"_test << [=]() {
+            constexpr std::string_view data = "Hello, dear world!";
+
+            string_type mystr = data.data();
+
+            TEST_REQUIRE(data.size() == mystr.size());
+
+            for (unsigned i = 0; i < data.size(); ++i) {
+                TEST_REQUIRE(mystr[i] == data[i]);
+            }
+
+            DBG("");
+
+            for (int i = 1; i <= (int)data.size(); ++i) {
+                TEST_REQUIRE(mystr[-i] == data[data.size() - i]);
+            }
+        };
+
+        #if 0
+        constexpr auto populate = [](const size_t test_size,
+                                     std::vector<value_type> &items,
+                                     array_type &arr) {
+            items.resize(test_size);
+            arr = array_type(test_size);
+
+            for (unsigned i = 0; i < test_size; ++i) {
+                arr[i] = items[i] = random_val();
+            }
+        };
+
+        constexpr auto compare = [](const std::vector<value_type> &items,
+                                    const array_type &arr, bool dump = false) {
+            TEST_REQUIRE(arr.size() == items.size());
+
+            for (size_t i = 0; i < arr.size(); ++i) {
+                if (dump && arr[i] != items[i]) {
+                    utest::log("<%s> [%zu/%zu]: %s != %s\n",
+                               typeid(value_type).name(),
+                               i, arr.size(),
+                               std::to_string(arr[i]).c_str(),
+                               std::to_string(items[i]).c_str());
+                }
+                TEST_REQUIRE(arr[i] == items[i]);
+            }
+        };
+
+        "iteration"_test << [=]() {
+            const size_t test_size = 17;
+            std::vector<value_type> items;
+            array_type arr;
+            populate(test_size, items, arr);
+
+            unsigned i = 0;
+            for (const auto &elem : arr) {
+                TEST_REQUIRE(elem == items[i]);
+                ++i;
+            }
+        };
+
+        "push_pop"_test << [=]() {
+            const size_t test_size = 17;
+
+            std::vector<value_type> items{};
+            array_type arr{};
+            for (unsigned i = 0; i < test_size; ++i) {
+                value_type val = random_val();
+
+                items.push_back(val);
+                arr.push_back(val);
+            }
+
+            compare(items, arr);
+
+
+            for (unsigned i = 0; i < test_size; ++i) {
+                value_type val = items.back();
+                value_type my_val = arr.back();
+
+                TEST_REQUIRE(val == my_val);
+
+                items.pop_back();
+                arr.pop_back();
+            }
+
+            compare(items, arr);
+        };
+
+        "swap"_test << [=]() {
+            const size_t test_size = 17;
+            std::vector<value_type> items;
+            array_type arr;
+            populate(test_size, items, arr);
+
+            std::swap(arr[0], arr[7]);
+            //std::iter_swap(arr.begin(), arr.begin() + 7);
+            // std, apparently, has no swap overload for these
+            value_type tmp = items[0];
+            items[0] = items[7];
+            items[7] = tmp;
+
+            compare(items, arr);
+        };
+
+        "sort"_test << [=]() {
+            const size_t test_size = 17;
+            std::vector<value_type> items;
+            array_type arr;
+            populate(test_size, items, arr);
+
+            #if 1
+            std::sort(items.begin(), items.end());
+            std::sort(arr.begin(), arr.end());
+            #else
+            std::copy(arr.begin(), arr.end(), items.begin());
+            #endif
+
+            compare(items, arr);
+        };
+
+        "copy"_test << [=]() {
+            const size_t test_size = 17;
+            std::vector<value_type> items;
+            array_type arr;
+            populate(test_size, items, arr);
+
+            items.clear();
+
+            std::copy(arr.begin(), arr.end(), std::back_inserter(items));
+
+            compare(items, arr);
+        };
+
+        "find"_test << [=]() {
+            const size_t test_size = 17;
+            std::vector<value_type> items;
+            array_type arr;
+            populate(test_size, items, arr);
+
+            for (unsigned i = 0; i < 500; ++i) {
+                value_type item = random_val();
+                TEST_REQUIRE(std::find(arr.begin(), arr.end(), item) - arr.begin() ==
+                             std::find(items.begin(), items.end(), item) - items.begin());
+            }
+        };
+        #endif
+    }
+};
+#pragma endregion StringTester
+
+
 int main() {
     abel::verbosity = 2;
 
     DBG("It works!");
 
-    #if 1
+    #if 0
     mylib::String str{"abc"};
     assert(str[0] == 'a');
     assert(str[1] == 'b');
@@ -30,7 +442,7 @@ int main() {
 
     {
         std::string_view stl_str_view = "Hello!";
-     
+
         str = str.view(stl_str_view, true);
         std::cout << str << "\n";
         stl_str_view = "Bye!";
@@ -41,7 +453,7 @@ int main() {
 
     {
         std::string stl_str = "Hello!";
-     
+
         str = str.view(stl_str, true);
         std::cout << str << "\n";
         stl_str[0] = 'B';
@@ -49,7 +461,8 @@ int main() {
         str = str.view("Or not");
         std::cout << str << "\n";
     }
-
+    #elif 1
+    StringTester().test();
     #else
     ArrayTester<mylib::Vector<int>>().test();
     ArrayTester<mylib::CArray<int, 3>>().test();
