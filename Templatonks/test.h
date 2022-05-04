@@ -70,6 +70,7 @@ public:
     bool run();
 
     static inline Test &current() {
+        assert(current_ptr);
         return *current_ptr;
     }
 
