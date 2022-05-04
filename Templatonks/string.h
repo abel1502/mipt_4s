@@ -196,7 +196,7 @@ public:
     /**
      * Constructs a non-owning view over a constant string. It is the caller's resposnibility
      * to ensure the source's lifetime. The string will be copied upon modification.
-     * The string's size is determined as either strlen(s) or count, whichever is smaller.
+     * The string's size is determined as either count or strlen(s), if count == npos.
      * If count is explicitly specified, yet the string is guaranteed (by the user) to be
      * null-terminated, the last parameter, null_terminated_promise, may be set to true.
      */
@@ -208,15 +208,11 @@ public:
 
         result.flags_.lazy_state = LazyState::view;
 
-        {
-            size_type actual_count = strnlen(str, count);
+        if (count == npos) {
+            count = strlen(str);
 
-            result.flags_.is_null_terminated = actual_count < count;
-
-            count = actual_count;
-        }
-
-        if (null_terminated_promise) {
+            result.flags_.is_null_terminated = true;
+        } else if (null_terminated_promise) {
             if (str[count] != nullchr) {
                 throw std::logic_error("Null terminator was promised, but is not present");
             }
@@ -537,11 +533,11 @@ public:
     }
 
     const_reverse_iterator crbegin() const {
-        return std::make_reverse_iterator(cbegin());
+        return std::make_reverse_iterator(cend());
     }
 
     const_reverse_iterator crend() const {
-        return std::make_reverse_iterator(cend());
+        return std::make_reverse_iterator(cbegin());
     }
 
     const_iterator begin() const {
@@ -577,11 +573,11 @@ public:
     }
 
     reverse_iterator rbegin() {
-        return std::make_reverse_iterator(begin());
+        return std::make_reverse_iterator(end());
     }
 
     reverse_iterator rend() {
-        return std::make_reverse_iterator(end());
+        return std::make_reverse_iterator(begin());
     }
     #pragma endregion Iterators
 
@@ -664,20 +660,23 @@ public:
         ensure_extra_capacity(1);
 
         size_type sz = size();
-        at(sz) = chr;
-        at(sz + 1) = 0;
+
         ++size_;
+
+        at(sz) = chr;
+        at(sz + 1) = nullchr;
     }
 
     value_type pop_back() {
-        size_type sz = size();
-
-        if (sz == 0) {
+        if (size() == 0) {
             throw std::out_of_range("Cannot pop from empty container");
         }
 
-        at(sz - 1) = 0;
+        value_type result = std::exchange(at(-1), nullchr);
+
         --size_;
+
+        return result;
     }
     #pragma endregion Back
 
@@ -799,10 +798,6 @@ public:
     }
 
     iterator erase(const_iterator first, const_iterator last) {
-        //if (first >= last) {
-        //    return begin() + (last - cbegin());
-        //}
-
         iterator result = begin() + (first - cbegin());
         *std::move(first, last, result) = nullchr;
         size_ -= (last - first);
@@ -834,11 +829,11 @@ public:
         return a <=> String::view(b);
     }
 
-    inline friend bool operator==(const value_type *a, String &b) {
+    inline friend bool operator==(const std::string_view &a, String &b) {
         return String::view(a) == b;
     }
 
-    inline friend auto operator<=>(const value_type *a, String &b) {
+    inline friend auto operator<=>(const std::string_view &a, String &b) {
         return String::view(a) <=> b;
     }
     #pragma endregion Comparison
@@ -1202,6 +1197,21 @@ protected:
 
 }
 #pragma endregion SharedLazySource
+
+
+#pragma region Literals
+namespace string_literals {
+
+String<> operator ""_s(const char *str, size_t size) {
+    return String<>(str, size);
+}
+
+String<> operator ""_sv(const char *str, size_t size) {
+    return String<>::view(str, size);
+}
+
+}
+#pragma endregion Literals
 
 
 }
