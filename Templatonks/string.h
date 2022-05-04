@@ -140,18 +140,18 @@ public:
         assign(other);
     }
 
-    String(const String &other, size_type pos,
+    String(const String &other, difference_type raw_pos,
            const allocator_type &alloc = allocator_type()) :
         String(alloc) {
 
-        assign(other, pos);
+        assign(other, raw_pos);
     }
 
-    String(const String &other, size_type pos, size_type count,
+    String(const String &other, difference_type raw_pos, size_type count,
            const allocator_type &alloc = allocator_type()) :
         String(alloc) {
 
-        assign(other, pos, count);
+        assign(other, raw_pos, count);
     }
 
     implicit String(const value_type *str,
@@ -338,7 +338,9 @@ public:
     }
 
     inline String &assign(const String &other,
-                          size_type pos, size_type count = npos) {
+                          difference_type raw_pos, size_type count = npos) {
+        size_type pos = other.prepare_idx(raw_pos);
+
         if (pos > other.size()) {
             throw std::out_of_range("Starting pos out of string range");
         }
@@ -693,8 +695,10 @@ public:
         return append(other.data(), 0, other.size());
     }
 
-    inline String &append(const String &other, size_type pos,
+    inline String &append(const String &other, difference_type raw_pos,
                           size_type count = npos) {
+        size_type pos = other.prepare_idx(raw_pos);
+
         if (pos > other.size()) {
             throw std::out_of_range("Starting pos out of string range");
         }
@@ -744,7 +748,7 @@ public:
 
     template <_impl::string_view_like<value_type> StringViewLike>
     inline String &append(const StringViewLike &str,
-                   size_type pos, size_type count = npos) {
+                          size_type pos, size_type count = npos) {
         std::string_view sv(str);
         if (pos > sv.size()) {
             throw std::out_of_range("Starting pos out of string range");
@@ -779,7 +783,31 @@ public:
     // TODO: Provide insert, substr, compare overloads, replace, find?
 
     #pragma region Erase
-    // TODO
+    inline String &erase(difference_type raw_pos, size_type count = npos) {
+        size_type pos = prepare_idx(raw_pos);
+
+        erase(begin() + pos, begin() + pos + std::min(count, size() - pos));
+
+        return *this;
+    }
+
+    iterator erase(const_iterator pos) {
+        iterator result = begin() + (pos - cbegin());
+        *std::move(std::next(pos), end(), result) = nullchr;
+        size_--;
+        return result;
+    }
+
+    iterator erase(const_iterator first, const_iterator last) {
+        //if (first >= last) {
+        //    return begin() + (last - cbegin());
+        //}
+
+        iterator result = begin() + (first - cbegin());
+        *std::move(first, last, result) = nullchr;
+        size_ -= (last - first);
+        return result;
+    }
     #pragma endregion Erase
     #pragma endregion Operations
 
@@ -797,7 +825,7 @@ public:
             cbegin(), cend(), other.cbegin(), other.cend()
         );
     }
-    
+
     inline friend bool operator==(const String &a, value_type *b) {
         return a == String::view(b);
     }
@@ -840,7 +868,7 @@ protected:
     #pragma region Protected interface
     inline size_type prepare_idx(difference_type idx) const {
         if (idx < 0) {
-            idx = idx + size_with_null();
+            idx = idx + size();
         }
 
         if (idx < 0 || size_with_null() <= (size_type)idx) {
@@ -941,7 +969,7 @@ protected:
         });
 
         if (new_capacity <= small_string_size) {
-            assert(size_with_null() < small_string_size);
+            assert(amount + 1 <= small_string_size);
 
             new_buf = small_contents_;
             going_small = true;
@@ -1026,6 +1054,11 @@ protected:
 
     void _share_from(String &other) {
         if (&other == this) {
+            return;
+        }
+
+        if (other.flags_.lazy_state == LazyState::view) {
+            *this = view(other);
             return;
         }
 
