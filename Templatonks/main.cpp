@@ -269,10 +269,22 @@ public:
     void test_all() {
         using namespace utest::literals;
 
+        "basic"_test << [=]() {
+            mylib::String str{"abc"};
+            TEST_REQUIRE(str.size() == 3);
+            TEST_REQUIRE(str.size_with_null() == 4);
+            TEST_REQUIRE(str.is_owning());
+            TEST_REQUIRE(str[0] == 'a');
+            TEST_REQUIRE(str[1] == 'b');
+            TEST_REQUIRE(str[2] == 'c');
+            TEST_REQUIRE(str[3] == 0);
+        };
+
         "access"_test << [=]() {
             constexpr std::string_view data = "Hello, dear world!";
 
             string_type mystr = data.data();
+            TEST_REQUIRE(mystr.is_owning());
 
             TEST_REQUIRE(data.size() == mystr.size());
 
@@ -280,54 +292,96 @@ public:
                 TEST_REQUIRE(mystr[i] == data[i]);
             }
 
-            DBG("");
-
             for (int i = 1; i <= (int)data.size(); ++i) {
                 TEST_REQUIRE(mystr[-i] == data[data.size() - i]);
             }
+
+            TEST_REQUIRE(mystr[data.size()] == '\0');
         };
 
-        #if 0
-        constexpr auto populate = [](const size_t test_size,
-                                     std::vector<value_type> &items,
-                                     array_type &arr) {
-            items.resize(test_size);
-            arr = array_type(test_size);
+        constexpr auto compare = [](const std::string_view &data,
+                                    const string_type &mystr, bool dump = false) {
+            TEST_REQUIRE(data.size() == mystr.size());
 
-            for (unsigned i = 0; i < test_size; ++i) {
-                arr[i] = items[i] = random_val();
-            }
-        };
-
-        constexpr auto compare = [](const std::vector<value_type> &items,
-                                    const array_type &arr, bool dump = false) {
-            TEST_REQUIRE(arr.size() == items.size());
-
-            for (size_t i = 0; i < arr.size(); ++i) {
-                if (dump && arr[i] != items[i]) {
-                    utest::log("<%s> [%zu/%zu]: %s != %s\n",
-                               typeid(value_type).name(),
-                               i, arr.size(),
-                               std::to_string(arr[i]).c_str(),
-                               std::to_string(items[i]).c_str());
+            for (size_t i = 0; i < data.size(); ++i) {
+                if (dump && data[i] != mystr[i]) {
+                    utest::log("[%zu/%zu]: %c != %c\n",
+                               i, data.size(),
+                               data[i], mystr[i]);
                 }
-                TEST_REQUIRE(arr[i] == items[i]);
+                TEST_REQUIRE(data[i] == mystr[i]);
             }
         };
 
         "iteration"_test << [=]() {
-            const size_t test_size = 17;
-            std::vector<value_type> items;
-            array_type arr;
-            populate(test_size, items, arr);
+            constexpr std::string_view data = "Hello, dear world!";
+
+            string_type mystr = data.data();
+            TEST_REQUIRE(mystr.is_owning());
+
+            TEST_REQUIRE(mystr.size() == (size_t)(mystr.cend() - mystr.cbegin()));
 
             unsigned i = 0;
-            for (const auto &elem : arr) {
-                TEST_REQUIRE(elem == items[i]);
+            for (const auto &elem : mystr) {
+                TEST_REQUIRE(elem == data[i]);
                 ++i;
             }
         };
 
+        "copy_on_write"_test << [=]() {
+            constexpr std::string_view data =
+                "I'm soooo long, I sure hope nobody copies me...";
+            string_type str1{data};
+            TEST_REQUIRE(str1.is_owning());
+
+            string_type str2 = str1;
+            TEST_REQUIRE(!str1.is_owning());
+            TEST_REQUIRE(!str2.is_owning());
+
+            compare(data, str1);
+            compare(data, str2);
+
+            constexpr std::string_view extra =
+                ", but most of all, Samy is my hero.";
+
+            str1.append(extra);
+            TEST_REQUIRE(str1.is_owning());
+            TEST_REQUIRE(!str2.is_owning());
+            compare(data, str2);
+        };
+
+        "no_copy_on_write"_test << [=]() {
+            string_type str1{"I'm soooo long, I sure hope nobody copies me..."};
+            TEST_REQUIRE(str1.is_owning());
+
+            string_type str2 = str1.as_const();
+            TEST_REQUIRE(str1.is_owning());
+            TEST_REQUIRE(str2.is_owning());
+        };
+
+        "small_cow"_test << [=]() {
+            constexpr std::string_view data =
+                "smolcow";
+            static_assert((data.size() + 1) * sizeof(char) <= sizeof(void *));
+
+            string_type str1{data};
+            TEST_REQUIRE(str1.is_owning());
+
+            string_type str2 = str1;
+            TEST_REQUIRE(!str1.is_owning());
+            TEST_REQUIRE(!str2.is_owning());
+
+            compare(data, str1);
+            compare(data, str2);
+
+            str1.erase(-3);
+            TEST_REQUIRE(str1.is_owning());
+            TEST_REQUIRE(!str2.is_owning());
+            compare(data.substr(0, data.size() - 3), str1);
+            compare(data, str2);
+        };
+
+        #if 0
         "push_pop"_test << [=]() {
             const size_t test_size = 17;
 
@@ -424,7 +478,9 @@ int main() {
 
     DBG("It works!");
 
-    #if 0
+    #if 1
+    StringTester().test();
+    #elif 0
     mylib::String str{"abc"};
     assert(str[0] == 'a');
     assert(str[1] == 'b');
@@ -461,9 +517,7 @@ int main() {
         str = str.view("Or not");
         std::cout << str << "\n";
     }
-    #elif 1
-    StringTester().test();
-    #else
+    #elif 0
     ArrayTester<mylib::Vector<int>>().test();
     ArrayTester<mylib::CArray<int, 3>>().test();
     ArrayTester<mylib::CArray<int, 7>>().test();
