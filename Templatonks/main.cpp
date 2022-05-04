@@ -1,5 +1,6 @@
 #include <ACL/general.h>
 #include <iostream>
+#include <iomanip>
 #include <string_view>
 #include "array.h"
 #include "string.h"
@@ -288,7 +289,7 @@ public:
 
             TEST_REQUIRE(data.size() == mystr.size());
 
-            for (unsigned i = 0; i < data.size(); ++i) {
+            for (size_t i = 0; i < data.size(); ++i) {
                 TEST_REQUIRE(mystr[i] == data[i]);
             }
 
@@ -321,7 +322,7 @@ public:
 
             TEST_REQUIRE(mystr.size() == (size_t)(mystr.cend() - mystr.cbegin()));
 
-            unsigned i = 0;
+            size_t i = 0;
             for (const auto &elem : mystr) {
                 TEST_REQUIRE(elem == data[i]);
                 ++i;
@@ -381,93 +382,103 @@ public:
             compare(data, str2);
         };
 
-        #if 0
         "push_pop"_test << [=]() {
-            const size_t test_size = 17;
+            constexpr std::string_view data = "Abacado or whatever, I'm not into algorithms";
 
-            std::vector<value_type> items{};
-            array_type arr{};
-            for (unsigned i = 0; i < test_size; ++i) {
-                value_type val = random_val();
-
-                items.push_back(val);
-                arr.push_back(val);
+            string_type str{};
+            for (size_t i = 0; i < data.size(); ++i) {
+                str.push_back(data[i]);
             }
 
-            compare(items, arr);
+            compare(data, str);
 
 
-            for (unsigned i = 0; i < test_size; ++i) {
-                value_type val = items.back();
-                value_type my_val = arr.back();
+            for (size_t i = 0; i < data.size(); ++i) {
+                char_type chr = data[data.size() - 1 - i];
+                char_type my_chr = str.back();
 
-                TEST_REQUIRE(val == my_val);
+                TEST_REQUIRE(chr == my_chr);
 
-                items.pop_back();
-                arr.pop_back();
+                str.pop_back();
             }
 
-            compare(items, arr);
+            compare("", str);
         };
 
-        "swap"_test << [=]() {
-            const size_t test_size = 17;
-            std::vector<value_type> items;
-            array_type arr;
-            populate(test_size, items, arr);
-
-            std::swap(arr[0], arr[7]);
-            //std::iter_swap(arr.begin(), arr.begin() + 7);
-            // std, apparently, has no swap overload for these
-            value_type tmp = items[0];
-            items[0] = items[7];
-            items[7] = tmp;
-
-            compare(items, arr);
-        };
+        test_compare_eq("Hello, dear world");
+        test_compare_eq("");
+        test_compare_eq(std::string_view("Hi there, pal!"));
 
         "sort"_test << [=]() {
-            const size_t test_size = 17;
-            std::vector<value_type> items;
-            array_type arr;
-            populate(test_size, items, arr);
+            constexpr std::string_view data = "Hello, dear world!";
 
-            #if 1
-            std::sort(items.begin(), items.end());
-            std::sort(arr.begin(), arr.end());
-            #else
-            std::copy(arr.begin(), arr.end(), items.begin());
-            #endif
+            std::string str = data.data();
+            string_type mystr = data.data();
+            TEST_REQUIRE(mystr.is_owning());
 
-            compare(items, arr);
+            std::sort(str.begin(), str.end());
+            std::sort(mystr.begin(), mystr.end());
+
+            compare(str, mystr);
         };
 
         "copy"_test << [=]() {
-            const size_t test_size = 17;
-            std::vector<value_type> items;
-            array_type arr;
-            populate(test_size, items, arr);
+            constexpr std::string_view data = "Hello, dear world!";
 
-            items.clear();
+            std::string str{};
+            string_type mystr = data.data();
+            TEST_REQUIRE(mystr.is_owning());
 
-            std::copy(arr.begin(), arr.end(), std::back_inserter(items));
+            std::copy(mystr.begin(), mystr.end(), std::back_inserter(str));
 
-            compare(items, arr);
+            compare(str, mystr);
         };
 
         "find"_test << [=]() {
-            const size_t test_size = 17;
-            std::vector<value_type> items;
-            array_type arr;
-            populate(test_size, items, arr);
+            constexpr std::string_view data = "Hello, dear world!";
 
-            for (unsigned i = 0; i < 500; ++i) {
-                value_type item = random_val();
-                TEST_REQUIRE(std::find(arr.begin(), arr.end(), item) - arr.begin() ==
-                             std::find(items.begin(), items.end(), item) - items.begin());
+            string_type mystr = data.data();
+            TEST_REQUIRE(mystr.is_owning());
+
+            using namespace std::string_view_literals;
+
+            for (char_type chr : "ABCabcHh0\0!1,"sv) {
+                TEST_REQUIRE(std::find(mystr.begin(), mystr.end(), chr) - mystr.begin() ==
+                             std::find(data.begin(), data.end(), chr) - data.begin());
             }
         };
-        #endif
+
+        "literals"_test << [=]() {
+            using namespace mylib::string_literals;
+            using namespace std::string_view_literals;
+
+            constexpr std::string_view data = "Hell\0o!"sv;
+
+            auto str = "Hell\0o!"_s;
+            static_assert(std::is_same_v<decltype(str), string_type>);
+            TEST_REQUIRE(str.is_owning());
+
+            compare(data, str);
+
+            auto str_view = "Hell\0o!"_sv;
+            static_assert(std::is_same_v<decltype(str_view), string_type>);
+            TEST_REQUIRE(!str_view.is_owning());
+
+            compare(data, str_view);
+        };
+
+        // TODO: Tests for views, ordered-comparison
+    }
+
+    void test_compare_eq(const auto &source) {
+        using namespace utest::literals;
+
+        "compare_eq"_test << [=]() {
+            string_type str{source};
+
+            TEST_REQUIRE(source == str);
+            TEST_REQUIRE(str == source);
+        };
     }
 };
 #pragma endregion StringTester
