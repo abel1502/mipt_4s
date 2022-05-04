@@ -27,7 +27,9 @@ class Function;
 template <typename R, typename ... As>
 class Function<R (As...)> {
 public:
+    #pragma region Aliases & etc.
     using result_type = R;
+    #pragma endregion Aliases & etc.
 
     #pragma region Protected helpers
 protected:
@@ -265,12 +267,15 @@ public:
     #pragma endregion Target
 
 protected:
+    #pragma region Fields
     union {
         alignas(sizeof(void *)) ICallable *ptr_ = nullptr;
         alignas(sizeof(void *)) mutable uint8_t buf_[small_func_size + 1];
     };
+    #pragma endregion Fields
 
 
+    #pragma region Protected interface
     ICallable *get_ptr() const {
         if (is_small()) {
             return reinterpret_cast<ICallable *>(buf_);
@@ -282,6 +287,7 @@ protected:
     constexpr void is_small(bool value) {
         buf_[small_func_size] = value;
     }
+    #pragma endregion Protected interface
 
 };
 
