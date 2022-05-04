@@ -13,6 +13,9 @@
 #include <algorithm>
 
 
+#define HEAVY_NULLTERM_CHECK_ 0
+
+
 namespace mylib {
 
 
@@ -21,7 +24,6 @@ namespace _impl {
 template <typename Allocator>
 class SharedLazySourcePtr;
 
-// TODO: Specify value_type for CharT where I'm using this
 template <typename T, typename CharT>
 concept string_view_like =
     std::convertible_to<T, std::basic_string_view<CharT>> &&
@@ -207,6 +209,7 @@ public:
         assert(result.flags_.lazy_state == LazyState::small);
 
         result.flags_.lazy_state = LazyState::view;
+        result.flags_.is_null_terminated = false;
 
         if (count == npos) {
             count = strlen(str);
@@ -423,6 +426,8 @@ public:
 
         // Equivalent to setting small_contents to an empty string
         ptr_ = nullptr;
+        size_ = 0;
+        capacity_ = small_string_size;
         flags_ = {.lazy_state = LazyState::small};
     }
     #pragma endregion Assign & clear
@@ -477,21 +482,29 @@ public:
     }
 
     const value_type *c_str() const {
+        #if HEAVY_NULLTERM_CHECK_
         if (!flags_.is_null_terminated) {
             assert(flags_.lazy_state == LazyState::view);
 
             throw std::runtime_error("The view is not null-terminated");
         }
+        #else
+        assert(flags_.is_null_terminated);
+        #endif
 
         return data();
     }
 
     value_type *mutable_c_str() {
+        #if HEAVY_NULLTERM_CHECK_
         if (!flags_.is_null_terminated) {
             assert(flags_.lazy_state == LazyState::view);
 
             throw std::runtime_error("The view is not null-terminated");
         }
+        #else
+        assert(flags_.is_null_terminated);
+        #endif
 
         return mutable_data();
     }
@@ -651,6 +664,10 @@ public:
 
     constexpr bool is_owning() const {
         return flags_.lazy_state <= LazyState::owned;
+    }
+
+    constexpr bool is_null_terminated() const {
+        return flags_.is_null_terminated;
     }
     #pragma endregion View-oriented
 
@@ -821,11 +838,11 @@ public:
         );
     }
 
-    inline friend bool operator==(const String &a, value_type *b) {
+    inline friend bool operator==(const String &a, std::string_view &b) {
         return a == String::view(b);
     }
 
-    inline friend auto operator<=>(const String &a, value_type *b) {
+    inline friend auto operator<=>(const String &a, std::string_view &b) {
         return a <=> String::view(b);
     }
 
@@ -1141,7 +1158,7 @@ public:
     SharedLazySourcePtr(const SharedLazySourcePtr &other) = delete;
     SharedLazySourcePtr &operator=(const SharedLazySourcePtr &other) = delete;
 
-    constexpr SharedLazySourcePtr(SharedLazySourcePtr &&other) : source{other.source} {
+    constexpr SharedLazySourcePtr(SharedLazySourcePtr &&other) noexcept : source{other.source} {
         other.source = nullptr;
     }
 
