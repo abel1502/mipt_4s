@@ -38,7 +38,8 @@ add_executable(
 	"allocator.h"
 	"test.cpp"
 	"string.h"
- )
+    "function.h"
+)
 
 target_link_libraries(
 	templatonks

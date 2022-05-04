@@ -11,6 +11,7 @@
 #include <initializer_list>
 #include <iostream>
 #include <algorithm>
+#include <new>
 
 
 #define HEAVY_NULLTERM_CHECK_ 0

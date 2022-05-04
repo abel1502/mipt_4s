@@ -4,6 +4,7 @@
 #include <string_view>
 #include "array.h"
 #include "string.h"
+#include "function.h"
 #include "dot.h"
 #include "test.h"
 
@@ -490,6 +491,12 @@ int main() {
     DBG("It works!");
 
     #if 1
+    mylib::Function func([](int a) { return a + 13; });
+    DBG("%zu == 64", sizeof(func));
+    assert(func.is_small());
+
+    std::cout << func(1) << "\n";
+    #elif 0
     StringTester().test();
     #elif 0
     mylib::String str{"abc"};
