@@ -496,6 +496,19 @@ int main() {
     assert(func.is_small());
 
     std::cout << func(1) << "\n";
+
+    assert(func(1) == 14);
+
+    mylib::Function func2 = func;
+
+    assert(func(1) == func2(1));
+
+    mylib::Function func3 = std::move(func);
+
+    assert(func3(1) == func2(1));
+    assert(!func);
+    assert(func2);
+    assert(func3);
     #elif 0
     StringTester().test();
     #elif 0

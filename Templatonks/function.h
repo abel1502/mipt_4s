@@ -40,7 +40,7 @@ protected:
     public:
         virtual R operator()(As ... args) = 0;
         virtual void copy_to(Function &new_host) const = 0;
-        virtual void move_to(Function &new_host) = 0;
+        virtual void move_to(Function &new_host, Function &old_host) = 0;
         virtual const std::type_info &target_type() const = 0;
         virtual void *target() = 0;
 
@@ -72,33 +72,40 @@ protected:
                 return;
             }
 
-            new_host.~Function();
+            new_host = nullptr;
 
             if constexpr (Small) {
-                // static_assert(sizeof(*this) <= small_func_size, 
+                // static_assert(sizeof(*this) <= small_func_size,
                 //               "Only small functors should be marked");
 
                 new (new_host.buf_) FunctorCallable(functor);
             } else {
                 new_host.ptr_ = new FunctorCallable(functor);
             }
+
+            new_host.is_small(Small);
         }
 
-        virtual void move_to(Function &new_host) override {
+        virtual void move_to(Function &new_host, Function &old_host) override {
             if (new_host.get_ptr() == this) {
                 return;
             }
 
-            new_host.~Function();
+            new_host = nullptr;
 
             if constexpr (Small) {
-                // static_assert(sizeof(*this) <= small_func_size, 
+                // static_assert(sizeof(*this) <= small_func_size,
                 //               "Only small functors should be marked");
 
                 new (new_host.buf_) FunctorCallable(std::move(functor));
             } else {
-                new_host.ptr_ = new FunctorCallable(std::move(functor));
+                new_host.ptr_ = this;
+                old_host.ptr_ = nullptr;
             }
+
+            new_host.is_small(Small);
+
+            old_host = nullptr;
         }
 
         virtual const std::type_info &target_type() const override {
@@ -112,6 +119,8 @@ protected:
     protected:
         [[no_unique_address]] F functor{};
     };
+
+    friend FunctorCallable;
     #pragma endregion Callable classes
 
 public:
@@ -125,6 +134,14 @@ public:
     Function(const Function &other) :
         Function() {
         *this = other;
+    }
+
+    Function &operator=(std::nullptr_t) {
+        this->~Function();
+        ptr_ = nullptr;
+        is_small(false);
+
+        return *this;
     }
 
     Function &operator=(const Function &other) {
@@ -159,14 +176,14 @@ public:
             return *this = nullptr;
         }
 
-        other_func->move_to(*this);
+        other_func->move_to(*this, other);
 
         return *this;
     }
 
     template <typename F>
     Function &operator=(F &&functor) {
-        ~Function();
+        this->~Function();
 
         new (this) Function(std::forward<F>(functor));
 
@@ -174,6 +191,7 @@ public:
     }
 
     template <typename F>
+    requires (!std::same_as<std::remove_reference_t<F>, Function>)
     Function(F &&functor) {
         if constexpr (sizeof(FunctorCallable<std::remove_reference_t<F>, true>) <= small_func_size) {
             new (buf_) FunctorCallable<std::remove_reference_t<F>, true >(std::forward<F>(functor));
@@ -192,7 +210,7 @@ public:
         if (!func) {
             return;
         }
-        
+
         if (is_small()) {
             func->~ICallable();
             return;
@@ -269,8 +287,8 @@ public:
 protected:
     #pragma region Fields
     union {
-        alignas(sizeof(void *)) ICallable *ptr_ = nullptr;
-        alignas(sizeof(void *)) mutable uint8_t buf_[small_func_size + 1];
+        alignas(sizeof(void *)) ICallable *ptr_;
+        alignas(sizeof(void *)) mutable uint8_t buf_[small_func_size + 1] = {};
     };
     #pragma endregion Fields
 
@@ -293,6 +311,12 @@ protected:
 
 
 #pragma region Deduction guides
+template<typename R, typename ... As>
+Function(Function<R (As...)> &) -> Function<R (As...)>;
+
+template<typename R, typename ... As>
+Function(Function<R (As...)> &&) -> Function<R (As...)>;
+
 template<typename R, typename ... As>
 Function(R (*)(As...)) -> Function<R (As...)>;
 
